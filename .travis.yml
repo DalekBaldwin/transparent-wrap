@@ -28,4 +28,4 @@ script:
                   (lambda (c h)
                     (declare (ignore c h))
                     (uiop:quit -1))))
-                 (transparent-wrap-test:run-all-tests))'
+                 (transparent-wrap-test:test-all))'
