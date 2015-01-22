@@ -21,5 +21,8 @@
   :components
   ((:module :test
             :components ((:file "package")
-                         (:file "transparent-wrap-test" :depends-on ("package")))))
+                         (:file "original")
+                         (:file "wrapping")
+                         (:file "transparent-wrap-test"))
+            :serial t))
   :depends-on (:transparent-wrap :stefil))
