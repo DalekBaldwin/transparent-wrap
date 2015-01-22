@@ -71,6 +71,11 @@
 
 (defun create-transparent-defun (function wrapper wrapping-package)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
+    
+    ;; fall-through: give up on transparency
+    (when (eql arglist :unknown)
+      (return-from create-transparent-defun (create-basic-defun function wrapper wrapping-package)))
+    
     (multiple-value-bind
           (required optional rest key aux)
         (organize-arguments arglist)
