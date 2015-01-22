@@ -86,12 +86,7 @@
         (labels ((create-call-optional (optional)
                    `(,function
                      ,@required
-                     ,@optional))
-                 (create-call-no-rest (optional key)
-                   `(,function
-                     ,@required
-                     ,@optional
-                     ,@(create-keyword-args key))))
+                     ,@optional)))
           `(defun ,(intern (princ-to-string function) wrapping-package)
                (,@required
                 ,@(when optional `(&optional
@@ -109,9 +104,10 @@
                     collect
                       `(,(1- i)
                          ,(funcall wrapper
-                           (create-call-optional
-                            (mapcar #'car
-                                    (subseq optional->supplied 0 (1- i)))))) into cases
+                           `(,function
+                             ,@required
+                             ,@(mapcar #'car
+                                       (subseq optional->supplied 0 (1- i)))))) into cases
                     finally
                       (return (append
                                cases
