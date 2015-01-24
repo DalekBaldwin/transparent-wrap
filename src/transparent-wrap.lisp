@@ -120,7 +120,7 @@
            (t `(,function
                 ,@required
                 ,@(mapcar #'car optional->supplied))))))
-    (if (null optional)
+    (if (null optional->supplied)
         non-optional-portion
         `(case (count-until-false
                 (list ,@(loop for optional in optional->supplied
