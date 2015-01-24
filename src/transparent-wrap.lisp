@@ -57,9 +57,8 @@
 (defun count-until-false (list)
   (or
    (loop for item in list
-      if item
+      while item
       count item into total
-      else return total
       finally (return total))
    0))
 
