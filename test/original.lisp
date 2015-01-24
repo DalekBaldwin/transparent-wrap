@@ -43,36 +43,36 @@
 
 (defun required
     (a b)
-  (list a b))
+  (values a b))
 
 (defun required-aux
     (a b
      &aux (c (list a b)))
-  (list a b c))
+  (values a b c))
 
 (defun required-optional
     (a b
      &optional c (d :d-default) (e :e-default e-supplied))
-  (list a b c d e e-supplied))
+  (values a b c d e e-supplied))
 
 (defun required-optional-aux
     (a b
      &optional c (d :d-default) (e :e-default e-supplied)
      &aux (f (list a b c d e e-supplied)))
-  (list a b c d e e-supplied f))
+  (values a b c d e e-supplied f))
 
 (defun required-optional-rest
     (a b
      &optional c (d :d-default) (e :e-default e-supplied)
      &rest f)
-  (list a b c d e e-supplied f))
+  (values a b c d e e-supplied f))
 
 (defun required-optional-rest-aux
     (a b
      &optional c (d :d-default) (e :e-default e-supplied)
      &rest f
      &aux (g (list a b c d e e-supplied f)))
-  (list a b c d e e-supplied f g))
+  (values a b c d e e-supplied f g))
 
 (defun required-optional-rest-key
     (a b
@@ -81,7 +81,7 @@
      &key f (g :g-default) (h :h-default h-supplied)
        ((:z i)) ((:y j) :j-default)
        ((:x k) :k-default k-supplied))
-  (list a b c d e e-supplied f g h h-supplied i j k k-supplied rest))
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest))
 
 (defun required-optional-rest-key-aux
     (a b
@@ -92,14 +92,14 @@
        ((:x k) :k-default k-supplied)
      &aux (l (list a b c d e e-supplied f g h
                    h-supplied i j k k-supplied rest)))
-  (list a b c d e e-supplied f g h h-supplied i j k k-supplied rest l))
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest l))
 
 (defun required-optional-key
     (a b
      &optional c (d :d-default) (e :e-default e-supplied)
      &key f (g :g-default) (h :h-default h-supplied)
        ((:z i)) ((:y j) :j-default) ((:x k) :k-default k-supplied))
-  (list a b c d e e-supplied f g h h-supplied i j k k-supplied))
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied))
 
 (defun required-optional-key-aux
     (a b
@@ -108,38 +108,38 @@
        ((:z i)) ((:y j) :j-default) ((:x k) :k-default k-supplied)
      &aux (l (list a b c d e e-supplied f g h
                    h-supplied i j k k-supplied)))
-  (list a b c d e e-supplied f g h h-supplied i j k k-supplied l))
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied l))
 
 (defun required-key
     (a b
      &key c (d :d-default) (e :e-default e-supplied)
        ((:z f)) ((:y g) :g-default) ((:x h) :h-default h-supplied))
-  (list a b c d e e-supplied f g h h-supplied))
+  (values a b c d e e-supplied f g h h-supplied))
 
 (defun required-key-aux
     (a b
      &key c (d :d-default) (e :e-default e-supplied)
        ((:z f)) ((:y g) :g-default) ((:x h) :h-default h-supplied)
      &aux (i (list a b c d e e-supplied f g h h-supplied)))
-  (list a b c d e e-supplied f g h h-supplied i))
+  (values a b c d e e-supplied f g h h-supplied i))
 
 (defun required-rest
     (a b
      &rest rest)
-  (list a b rest))
+  (values a b rest))
 
 (defun required-rest-aux
     (a b
      &rest rest
      &aux (c (list a b rest)))
-  (list a b rest c))
+  (values a b rest c))
 
 (defun required-rest-key
     (a b
      &rest rest
      &key c (d :d-default) (e :e-default e-supplied)
        ((:z f)) ((:y g) :g-default) ((:x h) :h-default h-supplied))
-  (list a b c d e e-supplied f g h h-supplied rest))
+  (values a b c d e e-supplied f g h h-supplied rest))
 
 (defun required-rest-key-aux
     (a b
@@ -147,27 +147,27 @@
      &key c (d :d-default) (e :e-default e-supplied)
        ((:z f)) ((:y g) :g-default) ((:x h) :h-default h-supplied)
      &aux (i (list a b c d e e-supplied f g h h-supplied rest)))
-  (list a b c d e e-supplied f g h h-supplied rest i))
+  (values a b c d e e-supplied f g h h-supplied rest i))
 
 (defun optional
     (&optional a (b :b-default) (c :c-default c-supplied))
-  (list a b c c-supplied))
+  (values a b c c-supplied))
 
 (defun optional-aux
     (&optional a (b :b-default) (c :c-default c-supplied)
      &aux (d (list a b c)))
-  (list a b c c-supplied d))
+  (values a b c c-supplied d))
 
 (defun optional-rest
     (&optional a (b :b-default) (c :c-default c-supplied)
      &rest rest)
-  (list a b c c-supplied rest))
+  (values a b c c-supplied rest))
 
 (defun optional-rest-aux
     (&optional a (b :b-default) (c :c-default c-supplied)
      &rest rest
      &aux (d (list a b c rest)))
-  (list a b c c-supplied rest d))
+  (values a b c c-supplied rest d))
 
 (defun optional-rest-key
     (&optional a (b :b-default) (c :c-default c-supplied)
@@ -175,7 +175,7 @@
      &key d (e :e-default) (f :f-default f-supplied)
        ((:z g)) ((:y h) :h-default)
        ((:x i) :i-default i-supplied))
-  (list a b c c-supplied rest d e f f-supplied g h i i-supplied))
+  (values a b c c-supplied rest d e f f-supplied g h i i-supplied))
 
 (defun optional-rest-key-aux
     (&optional a (b :b-default) (c :c-default c-supplied)
@@ -184,14 +184,14 @@
        ((:z g)) ((:y h) :h-default)
        ((:x i) :i-default i-supplied)
      &aux (j (list a b c c-supplied rest d e f f-supplied g h i i-supplied)))
-  (list a b c c-supplied rest d e f f-supplied g h i i-supplied j))
+  (values a b c c-supplied rest d e f f-supplied g h i i-supplied j))
 
 (defun optional-key
     (&optional a (b :b-default) (c :c-default c-supplied)
      &key d (e :e-default) (f :f-default f-supplied)
        ((:z g)) ((:y h) :h-default)
        ((:x i) :i-default i-supplied))
-  (list a b c c-supplied d e f f-supplied g h i i-supplied))
+  (values a b c c-supplied d e f f-supplied g h i i-supplied))
 
 (defun optional-key-aux
     (&optional a (b :b-default) (c :c-default c-supplied)
@@ -199,36 +199,36 @@
        ((:z g)) ((:y h) :h-default)
        ((:x i) :i-default i-supplied)
      &aux (j (list a b c c-supplied d e f f-supplied g h i i-supplied)))
-  (list a b c c-supplied d e f f-supplied g h i i-supplied j))
+  (values a b c c-supplied d e f f-supplied g h i i-supplied j))
 
 (defun key
     (&key a (b :b-default) (c :c-default c-supplied)
        ((:z d)) ((:y e) :e-default)
        ((:x f) :f-default f-supplied))
-  (list a b c c-supplied d e f f-supplied))
+  (values a b c c-supplied d e f f-supplied))
 
 (defun key-aux
     (&key a (b :b-default) (c :c-default c-supplied)
        ((:z d)) ((:y e) :e-default)
        ((:x f) :f-default f-supplied)
      &aux (g (list a b c c-supplied d e f f-supplied)))
-  (list a b c c-supplied d e f f-supplied g))
+  (values a b c c-supplied d e f f-supplied g))
 
 (defun rest_
     (&rest rest)
-  (list rest))
+  (values rest))
 
 (defun rest-aux
     (&rest rest
      &aux (a (list rest)))
-  (list rest a))
+  (values rest a))
 
 (defun rest-key
     (&rest rest
      &key a (b :b-default) (c :c-default c-supplied)
        ((:z d)) ((:y e) :e-default)
        ((:x f) :f-default f-supplied))
-  (list a b c c-supplied d e f f-supplied rest))
+  (values a b c c-supplied d e f f-supplied rest))
 
 (defun rest-key-aux
     (&rest rest
@@ -236,4 +236,4 @@
        ((:z d)) ((:y e) :e-default)
        ((:x f) :f-default f-supplied)
      &aux (g (list a b c c-supplied d e f f-supplied rest)))
-  (list a b c c-supplied d e f f-supplied rest g))
+  (values a b c c-supplied d e f f-supplied rest g))
