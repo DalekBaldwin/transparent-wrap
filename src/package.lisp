@@ -4,6 +4,7 @@
   (:use :cl)
   (:export
    :create-opaque-defun
+   :opaque-defun
    :create-transparent-defun
    :transparent-defun
    :create-opaque-defmacro
