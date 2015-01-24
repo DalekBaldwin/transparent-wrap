@@ -87,7 +87,7 @@
                     ,@required
                     ,@(mapcar #'car optional->supplied)
                     ,@rest))
-           (key
+           (key->supplied
             `(apply (symbol-function ',function)
                     ,@required
                     ,@(mapcar #'car optional->supplied)
