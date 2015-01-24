@@ -33,7 +33,6 @@ For some argument lists, this imposes a considerable overhead, since we have to 
 
 2. When turning a development build into a production build, you can swap out `create-transparent-defun` for `create-opaque-defun` to include the same wrapping logic but strip out all the infrastructure for imitating the function signature.
 
-
 There is also a convenience macro so you don't have to quote or sharp-quote anything, as long as you define the wrapping code as a macro. Here are all the variations:
 
 ```lisp
@@ -67,3 +66,5 @@ There is also a convenience macro so you don't have to quote or sharp-quote anyt
 ;; macro
 (transparent-defmacro package:macro wrapper :wrapping-package )
 ```
+
+This repo uses `trivial-arguments` to retrieve function and macro signatures. When no signature is available through introspection, it falls back to basic `opaque-defun` functionality and creates a wrapper with a `&rest` parameter only.
