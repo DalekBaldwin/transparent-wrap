@@ -10,7 +10,7 @@ So if lots of functionality in a package is breaking because of some trivial inc
   #.`(:export
       ,@(loop for symbol being the external-symbols of :some-package
              when (and (fboundp symbol)
-                       (eql (symbol-package symbol) (find-package :sdl)))
+                       (eql (symbol-package symbol) (find-package :some-package)))
              collect (intern (symbol-name symbol) :keyword))))
 
 #.`(progn
