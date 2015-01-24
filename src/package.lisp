@@ -6,7 +6,8 @@
    :create-opaque-defun
    :create-transparent-defun
    :transparent-defun
-   :create-opaque-defmacro))
+   :create-opaque-defmacro
+   :opaque-defmacro))
 
 (in-package :transparent-wrap)
 

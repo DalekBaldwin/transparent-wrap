@@ -227,10 +227,19 @@
    :body-maker (lambda (function required optional rest key)
      `(,wrapper ,(create-body function required optional rest key)))))
 
-;; Macro wrappers should look like this:
+;; Macro-wrapping functional arguments should look like this:
 ;; (lambda (wrapped-macro-form) ``(wrap-something-around ,,wrapped-macro-form))
 
 (defun create-opaque-defmacro (macro wrapper wrapping-package)
   `(defmacro ,(intern (princ-to-string macro) wrapping-package)
        (&rest args)
      ,(funcall wrapper ``(,',macro ,@args))))
+
+;; But macro-wrapping macros should look like this:
+;; (defmacro wrapper (wrapped-macro-form)
+;;   `(wrap-something-around ,wrapped-macro-form))
+
+(defmacro opaque-defmacro (macro wrapper wrapping-package)
+  `(defmacro ,(intern (princ-to-string macro) wrapping-package)
+       (&rest args)
+     (,wrapper `(,',macro ,@args))))
