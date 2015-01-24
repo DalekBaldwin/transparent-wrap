@@ -29,7 +29,7 @@ and fix it without having to massively edit the package's source code or your cl
 
 For some argument lists, this imposes a considerable overhead, since we have to manually ensure that we only pass exactly the same subset of optional or keyword arguments that appeared in the outer call in case the wrapped function explicitly checks whether any of those arguments were supplied. Transparent-wrap offers two ways to mitigate this overhead:
 
-1. Set the keyword argument `:force-rest` to `t` in `create-transparent-defun`. This adds a `&rest` parameter when wrapping functions that have `&key` arguments but no `&rest` argument. This way, the keyword arguments can be passed through with `apply` without checking which ones are present.
+1. Set the keyword argument `:force-rest` to `t` in `create-transparent-defun`. This adds a `&rest` parameter when wrapping a function that has `&key` arguments but no `&rest` argument. This way, the keyword arguments can be passed through with `apply` without checking which ones are present.
 
 2. When turning a development build into a production build, you can swap out `create-transparent-defun` for `create-opaque-defun` to include the same wrapping logic but strip out all the infrastructure for imitating the function signature.
 
