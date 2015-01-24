@@ -63,25 +63,94 @@
    0))
 
 ;; Function wrappers should look like this:
-;; (lambda (function-body) `(wrap-something-around ,function-body))
+;; (lambda (function-call) `(wrap-something-around ,function-call))
 
-(defun create-basic-defun (function wrapper wrapping-package
-                           &key alt-name
-                           )
+(defun create-opaque-defun (function wrapper wrapping-package
+                           &key alt-name)
   `(defun ,(or alt-name
                (intern (princ-to-string function) wrapping-package))
        (&rest args)
      ,(funcall wrapper
                `(apply (symbol-function ',function) args))))
 
-(defun create-transparent-defun (function wrapper wrapping-package
-                                 &key force-rest alt-name)
+(defmacro opaque-defun (function wrapper wrapping-package &key alt-name)
+  `(defun ,(or alt-name
+               (intern (princ-to-string function) wrapping-package))
+       (&rest args)
+     (,wrapper (apply (symbol-function ',function) args))))
+
+(defun create-body (function required optional->supplied rest key->supplied)
+  (let ((non-optional-portion
+         (cond
+           (rest
+            `(apply (symbol-function ',function)
+                    ,@required
+                    ,@(mapcar #'car optional->supplied)
+                    ,@rest))
+           (key
+            `(apply (symbol-function ',function)
+                    ,@required
+                    ,@(mapcar #'car optional->supplied)
+                    (let ((actual-keys))
+                      (loop
+                         for supplied in
+                           (list ,@(loop for key in key->supplied
+                                      collect (cdr key)))
+                         for arg in
+                           (list ,@(loop for key in key->supplied
+                                      collect
+                                        (let ((thing (car key)))
+                                          (if (atom thing)
+                                              thing
+                                              (second thing)))))
+                         for key in
+                           (list ,@(loop for key in key->supplied
+                                      collect
+                                        (let ((thing (car key)))
+                                          (if (atom thing)
+                                              (intern
+                                               (symbol-name thing)
+                                               :keyword)
+                                              (first thing)))))
+                         when supplied
+                         do
+                           (push arg actual-keys)
+                           (push key actual-keys))
+                      actual-keys)))
+           (t `(,function
+                ,@required
+                ,@(mapcar #'car optional->supplied))))))
+    (if (null optional)
+        non-optional-portion
+        `(case (count-until-false
+                (list ,@(loop for optional in optional->supplied
+                           collect (cdr optional))))
+           ,@(loop for optional in optional->supplied
+                counting optional into i
+                collect
+                  `(,(1- i)
+                     (,function
+                      ,@required
+                      ,@(mapcar
+                         #'car
+                         (subseq optional->supplied 0 (1- i)))))
+                into cases
+                finally
+                  (return
+                    (append
+                     cases
+                     (list
+                      `(otherwise
+                        ,non-optional-portion)))))))))
+
+(defun create-transparent-defun% (function wrapper wrapping-package
+                                  &key force-rest alt-name body-maker)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
     
     ;; fall-through: give up on transparency
     (when (eql arglist :unknown)
-      (return-from create-transparent-defun
-        (create-basic-defun function wrapper wrapping-package
+      (return-from create-transparent-defun%
+        (create-opaque-defun function wrapper wrapping-package
                             :alt-name alt-name)))
     
     (multiple-value-bind
@@ -136,75 +205,32 @@
                                                      (if (atom thing)
                                                          thing
                                                          (second thing))))))))
+           ,(funcall body-maker function required optional->supplied &rest key->supplied)
+           #+nil
            ,(funcall
              wrapper
-             (let ((non-optional-portion
-                    (cond
-                      (&rest
-                       `(apply (symbol-function ',function)
-                               ,@required
-                               ,@(mapcar #'car optional->supplied)
-                               ,@&rest))
-                      (&key
-                       `(apply (symbol-function ',function)
-                               ,@required
-                               ,@(mapcar #'car optional->supplied)
-                               (let ((actual-keys))
-                                 (loop
-                                    for supplied in
-                                      (list ,@(loop for key in key->supplied
-                                                 collect (cdr key)))
-                                    for arg in
-                                      (list ,@(loop for key in key->supplied
-                                                 collect
-                                                   (let ((thing (car key)))
-                                                     (if (atom thing)
-                                                         thing
-                                                         (second thing)))))
-                                    for key in
-                                      (list ,@(loop for key in key->supplied
-                                                 collect
-                                                   (let ((thing (car key)))
-                                                     (if (atom thing)
-                                                         (intern
-                                                          (symbol-name thing)
-                                                          :keyword)
-                                                         (first thing)))))
-                                    when supplied
-                                    do
-                                      (push arg actual-keys)
-                                      (push key actual-keys))
-                                 actual-keys)))
-                      (t `(,function
-                           ,@required
-                           ,@(mapcar #'car optional->supplied))))))
-                   (if (null &optional)
-                       non-optional-portion
-                       `(case (count-until-false
-                               (list ,@(loop for optional in optional->supplied
-                                          collect (cdr optional))))
-                          ,@(loop for optional in optional->supplied
-                               counting optional into i
-                               collect
-                                 `(,(1- i)
-                                    (,function
-                                     ,@required
-                                     ,@(mapcar
-                                        #'car
-                                        (subseq optional->supplied 0 (1- i)))))
-                               into cases
-                               finally
-                                 (return
-                                   (append
-                                    cases
-                                    (list
-                                     `(otherwise
-                                       ,non-optional-portion))))))))))))))
+             (create-body function required optional->supplied &rest key->supplied)))))))
+
+(defun create-transparent-defun (function wrapper wrapping-package
+                                 &key force-rest alt-name)
+  (create-transparent-defun%
+   function wrapper wrapping-package
+   :force-rest force-rest :alt-name alt-name
+   :body-maker (lambda (function required optional rest key)
+     (funcall wrapper (create-body function required optional rest key)))))
+
+(defmacro transparent-defun (function wrapper wrapping-package
+                             &key force-rest alt-name)
+  (create-transparent-defun%
+   function wrapper wrapping-package
+   :force-rest force-rest :alt-name alt-name
+   :body-maker (lambda (function required optional rest key)
+     `(,wrapper ,(create-body function required optional rest key)))))
 
 ;; Macro wrappers should look like this:
-;; (lambda (macro-body) ``(wrap-something-around ,,macro-body))
+;; (lambda (wrapped-macro-form) ``(wrap-something-around ,,wrapped-macro-form))
 
-(defun create-basic-defmacro (macro wrapper wrapping-package)
+(defun create-opaque-defmacro (macro wrapper wrapping-package)
   `(defmacro ,(intern (princ-to-string macro) wrapping-package)
        (&rest args)
      ,(funcall wrapper ``(,',macro ,@args))))
