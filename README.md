@@ -11,7 +11,7 @@ So if lots of functionality in a package is breaking because of some trivial inc
       ,@(loop for symbol being the external-symbols of :some-package
              when (and (fboundp symbol)
                        (eql (symbol-package symbol) (find-package :some-package)))
-             collect (make-symbol (symbol-name symbol)))))
+             collect symbol)))
 
 #.`(progn
      ,@(loop for symbol being the external-symbols of :some-package

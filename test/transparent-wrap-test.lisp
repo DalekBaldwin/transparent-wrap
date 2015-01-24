@@ -1,4 +1,4 @@
-(in-package #:transparent-wrap-test)
+(in-package :transparent-wrap-test)
 
 (in-root-suite)
 

@@ -1,7 +1,7 @@
-(in-package #:cl-user)
+(in-package :cl-user)
 
-(defpackage #:transparent-wrap
-  (:use #:cl)
+(defpackage :transparent-wrap
+  (:use :cl)
   (:export
    #:create-opaque-defun
    #:opaque-defun
@@ -10,7 +10,7 @@
    #:create-opaque-defmacro
    #:opaque-defmacro))
 
-(in-package #:transparent-wrap)
+(in-package :transparent-wrap)
 
 (defparameter *system-directory*
   (make-pathname

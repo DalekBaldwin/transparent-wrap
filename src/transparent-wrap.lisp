@@ -1,4 +1,4 @@
-(in-package #:transparent-wrap)
+(in-package :transparent-wrap)
 
 (defun organize-arguments (arglist)
   (let ((directives (list '&optional '&rest '&key '&allow-other-keys '&aux))

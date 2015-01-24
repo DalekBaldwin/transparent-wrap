@@ -1,10 +1,10 @@
 ;;;; transparent-wrap.asd
 
-(defpackage #:transparent-wrap-system
-  (:use #:cl #:asdf))
-(in-package #:transparent-wrap-system)
+(defpackage :transparent-wrap-system
+  (:use :cl :asdf))
+(in-package :transparent-wrap-system)
 
-(defsystem #:transparent-wrap
+(defsystem :transparent-wrap
   :name "transparent-wrap"
   :serial t
   :components
@@ -13,9 +13,9 @@
             :components ((:file "package")
                          (:file "transparent-wrap"))
             :serial t))
-  :depends-on (#:trivial-arguments))
+  :depends-on (:trivial-arguments))
 
-(defsystem #:transparent-wrap-test
+(defsystem :transparent-wrap-test
   :name "transparent-wrap-test"
   :serial t
   :components
@@ -25,4 +25,4 @@
                          (:file "wrapping")
                          (:file "transparent-wrap-test"))
             :serial t))
-  :depends-on (#:transparent-wrap #:stefil #:alexandria))
+  :depends-on (:transparent-wrap :stefil :alexandria))
