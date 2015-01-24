@@ -144,10 +144,10 @@
                                                           :keyword)
                                                          (first thing)))))
                                     when supplied
-                                    do (progn
-                                         (push key actual-keys)
-                                         (push arg actual-keys)))
-                                 (nreverse actual-keys)))))
+                                    do
+                                      (push arg actual-keys)
+                                      (push key actual-keys))
+                                 actual-keys))))
                      (t (funcall wrapper
                                  `(,function
                                    ,@required
