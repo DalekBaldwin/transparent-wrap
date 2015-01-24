@@ -34,27 +34,71 @@
     (transparent-wrap-test.original:required-optional 1 2 3 4 5)
     (transparent-wrap-test.wrapping:required-optional 1 2 3 4 5))))
 
-(deftest test-required-optional-rest ()
-  (is
-   (equal
-    (transparent-wrap-test.original:required-optional-rest 1 2)
-    (transparent-wrap-test.wrapping:required-optional-rest 1 2)))
-  (is
-   (equal
-    (transparent-wrap-test.original:required-optional-rest 1 2 3)
-    (transparent-wrap-test.wrapping:required-optional-rest 1 2 3)))
-  (is
-   (equal
-    (transparent-wrap-test.original:required-optional-rest 1 2 3 4)
-    (transparent-wrap-test.wrapping:required-optional-rest 1 2 3 4)))
-  (is
-   (equal
-    (transparent-wrap-test.original:required-optional-rest 1 2 3 4 5)
-    (transparent-wrap-test.wrapping:required-optional-rest 1 2 3 4 5)))
-  (is
-   (equal
-    (transparent-wrap-test.original:required-optional-rest 1 2 3 4 5 6)
-    (transparent-wrap-test.wrapping:required-optional-rest 1 2 3 4 5 6))))
+#.
+`(deftest test-required-optional-rest ()
+   ,@(let ((arguments (list 1 2 3 4 5 6 7)))
+          (loop for arglist in
+                 (loop for i from 2 to (length arguments)
+                    collect (subseq arguments 0 i))
+             collect
+               `(is
+                 (equal
+                  (transparent-wrap-test.original:required-optional-rest ,@arglist)
+                  (transparent-wrap-test.wrapping:required-optional-rest ,@arglist))))))
+
+#.
+`(deftest test-required-optional-rest-key ()
+   ,@(let ((arguments (list 1 2 3 4 5)))
+          (loop for arglist in
+                 (loop for i from 2 to (length arguments)
+                    collect (subseq arguments 0 i))
+             collect
+               `(is
+                 (equal
+                  (transparent-wrap-test.original:required-optional-rest-key ,@arglist)
+                  (transparent-wrap-test.wrapping:required-optional-rest-key ,@arglist)))))
+   ,@(loop for combination in
+          (let ((combinations)
+                (arguments '((:f 6) (:g 7) (:h 8) (:z 9) (:y 10) (:x 11))))
+            (loop for i from 0 to (length arguments)
+                 do
+                 (map-combinations
+                  (lambda (c) (push c combinations))
+                  arguments :length i))
+            (reverse (mapcar #'flatten combinations)))
+          collect
+          `(is
+            (equal
+             (transparent-wrap-test.original:required-optional-rest-key
+              1 2 3 4 5 ,@combination)
+             (transparent-wrap-test.wrapping:required-optional-rest-key
+              1 2 3 4 5 ,@combination)))))
+
+#.
+`(deftest test-required-optional-key ()
+   ,@(let ((arguments (list 1 2 3 4 5)))
+          (loop for arglist in
+                 (loop for i from 2 to (length arguments)
+                    collect (subseq arguments 0 i))
+             collect
+               `(is
+                 (equal
+                  (transparent-wrap-test.original:required-optional-key ,@arglist)
+                  (transparent-wrap-test.wrapping:required-optional-key ,@arglist)))))
+   ,@(loop for combination in
+          (let ((combinations)
+                (arguments '((:f 6) (:g 7) (:h 8) (:z 9) (:y 10) (:x 11))))
+            (loop for i from 0 to (length arguments)
+                 do
+                 (map-combinations
+                  (lambda (c) (push c combinations))
+                  arguments :length i))
+            (reverse (mapcar #'flatten combinations)))
+          collect
+          `(is
+            (equal
+             (transparent-wrap-test.original:required-optional-key 1 2 3 4 5 ,@combination)
+             (transparent-wrap-test.wrapping:required-optional-key 1 2 3 4 5 ,@combination)))))
 
 #.
 `(deftest test-required-key ()
@@ -72,3 +116,20 @@
             (equal
              (transparent-wrap-test.original:required-key 1 2 ,@combination)
              (transparent-wrap-test.wrapping:required-key 1 2 ,@combination)))))
+
+#.
+`(deftest test-required-rest-key ()
+   ,@(loop for combination in
+          (let ((combinations)
+                (arguments '((:c 3) (:d 4) (:e 5) (:z 6) (:y 7) (:x 8))))
+            (loop for i from 0 to (length arguments)
+                 do
+                 (map-combinations
+                  (lambda (c) (push c combinations))
+                  arguments :length i))
+            (reverse (mapcar #'flatten combinations)))
+          collect
+          `(is
+            (equal
+             (transparent-wrap-test.original:required-rest-key 1 2 ,@combination)
+             (transparent-wrap-test.wrapping:required-rest-key 1 2 ,@combination)))))
