@@ -241,6 +241,15 @@
        (&rest args)
      ,(funcall wrapper ``(,',macro ,@args))))
 
+;; But macro-wrapping macros should look like normal macros:
+;; (defmacro wrapper (wrapped-macro-form)
+;;   `(wrap-something-around ,wrapped-macro-form))
+
+(defmacro opaque-defmacro (macro wrapper wrapping-package)
+  `(defmacro ,(intern (princ-to-string macro) wrapping-package)
+       (&rest args)
+     (,wrapper `(,',macro ,@args))))
+
 (defun create-transparent-defmacro (macro wrapper wrapping-package)
   (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
          (whole-p (member '&whole arglist))
@@ -255,15 +264,6 @@
        ;; unused arguments
        ,(funcall wrapper
          ``(,',macro ,@(rest ,whole))))))
-
-;; But macro-wrapping macros should look like normal macros:
-;; (defmacro wrapper (wrapped-macro-form)
-;;   `(wrap-something-around ,wrapped-macro-form))
-
-(defmacro opaque-defmacro (macro wrapper wrapping-package)
-  `(defmacro ,(intern (princ-to-string macro) wrapping-package)
-       (&rest args)
-     (,wrapper `(,',macro ,@args))))
 
 (defmacro transparent-defmacro (macro wrapper wrapping-package)
   (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
