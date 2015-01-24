@@ -235,7 +235,22 @@
        (&rest args)
      ,(funcall wrapper ``(,',macro ,@args))))
 
-;; But macro-wrapping macros should look like this:
+(defun create-transparent-defmacro (macro wrapper wrapping-package)
+  (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
+         (whole-p (member '&whole arglist))
+         (whole (if whole-p
+                    (second whole-p)
+                    (gensym "WHOLE"))))
+    `(defmacro ,(intern (princ-to-string macro) wrapping-package)
+         ,(if whole-p
+              arglist
+              (append `(&whole ,whole) arglist))
+       ;; to-do: parse actual signature well enough to avoid warnings about
+       ;; unused arguments
+       ,(funcall wrapper
+         ``(,',macro ,@(rest ,whole))))))
+
+;; But macro-wrapping macros should look like normal macros:
 ;; (defmacro wrapper (wrapped-macro-form)
 ;;   `(wrap-something-around ,wrapped-macro-form))
 
@@ -243,3 +258,18 @@
   `(defmacro ,(intern (princ-to-string macro) wrapping-package)
        (&rest args)
      (,wrapper `(,',macro ,@args))))
+
+(defmacro transparent-defmacro (macro wrapper wrapping-package)
+  (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
+         (whole-p (member '&whole arglist))
+         (whole (if whole-p
+                    (second whole-p)
+                    (gensym "WHOLE"))))
+    `(defmacro ,(intern (princ-to-string macro) wrapping-package)
+         ,(if whole-p
+              arglist
+              (append `(&whole ,whole) arglist))
+       ;; to-do: parse actual signature well enough to avoid warnings about
+       ;; unused arguments
+       `(,',wrapper
+         (,',macro ,@(rest ,whole))))))

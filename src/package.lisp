@@ -8,7 +8,9 @@
    #:create-transparent-defun
    #:transparent-defun
    #:create-opaque-defmacro
-   #:opaque-defmacro))
+   #:opaque-defmacro
+   #:create-transparent-defmacro
+   #:transparent-defmacro))
 
 (in-package :transparent-wrap)
 
