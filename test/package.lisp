@@ -4,11 +4,3 @@
   (:use :cl :transparent-wrap :stefil :alexandria)
   (:export
    #:test-all))
-
-(in-package :transparent-wrap-test)
-
-(defparameter *system-directory*
-  (make-pathname
-   :directory 
-   (pathname-directory
-    (asdf:system-definition-pathname "transparent-wrap"))))

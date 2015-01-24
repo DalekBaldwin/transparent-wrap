@@ -1,6 +1,6 @@
 [![Build Status](https://travis-ci.org/DalekBaldwin/transparent-wrap.svg?branch=master)](https://travis-ci.org/DalekBaldwin/transparent-wrap)
 
-This is a small utility for writing wrapper functions that have the same signature as the functions they wrap so that you can still interactively see the same function signature in the SLIME minibuffer. (It also offers the same feature for macros, which is not quite as difficult but is included for completeness' sake.)
+This is a small utility for generating wrapper functions that have the same signature as the functions they wrap so that you can still interactively see the same function signature in the SLIME minibuffer. (It also offers the same feature for macros, which is not quite as difficult but is included for completeness' sake.)
 
 For example, if lots of functionality in a package is breaking because of some trivial incompatibility with your Lisp environment, you can do something like this:
 

@@ -1,5 +1,7 @@
 ;;;; transparent-wrap.asd
 
+(in-package :cl-user)
+
 (defpackage :transparent-wrap-system
   (:use :cl :asdf))
 (in-package :transparent-wrap-system)
@@ -7,6 +9,12 @@
 (defsystem :transparent-wrap
   :name "transparent-wrap"
   :serial t
+  :author "Kyle Littler"
+  :license "LLGPL"
+  :description "A signature-preserving wrapper generator for functions and macros."
+  :long-description
+  #.(uiop:read-file-string
+     (uiop:subpathname *load-pathname* "README.md"))
   :components
   ((:static-file "transparent-wrap.asd")
    (:module :src

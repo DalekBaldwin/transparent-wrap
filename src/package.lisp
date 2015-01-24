@@ -11,11 +11,3 @@
    #:opaque-defmacro
    #:create-transparent-defmacro
    #:transparent-defmacro))
-
-(in-package :transparent-wrap)
-
-(defparameter *system-directory*
-  (make-pathname
-   :directory
-   (pathname-directory
-    (asdf:system-definition-pathname "transparent-wrap"))))

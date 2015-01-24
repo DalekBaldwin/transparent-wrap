@@ -66,7 +66,7 @@
 ;; (lambda (function-call) `(wrap-something-around ,function-call))
 
 (defun create-opaque-defun (function wrapper wrapping-package
-                           &key alt-name)
+                            &key alt-name)
   `(defun ,(or alt-name
                (intern (princ-to-string function) wrapping-package))
        (&rest args)
@@ -77,7 +77,8 @@
 ;; (defmacro wrapper (wrapped-function-form)
 ;;   `(wrap-something-around ,wrapped-function-form))
 
-(defmacro opaque-defun (function wrapper wrapping-package &key alt-name)
+(defmacro opaque-defun (function wrapper wrapping-package
+                        &key alt-name)
   `(defun ,(or alt-name
                (intern (princ-to-string function) wrapping-package))
        (&rest args)
