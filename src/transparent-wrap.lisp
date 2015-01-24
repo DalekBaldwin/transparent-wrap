@@ -65,24 +65,35 @@
 ;; Function wrappers should look like this:
 ;; (lambda (function-body) `(wrap-something-around ,function-body))
 
-(defun create-basic-defun (function wrapper wrapping-package)
-  `(defun ,(intern (princ-to-string function) wrapping-package)
+(defun create-basic-defun (function wrapper wrapping-package
+                           &key alt-name
+                           )
+  `(defun ,(or alt-name
+               (intern (princ-to-string function) wrapping-package))
        (&rest args)
      ,(funcall wrapper
                `(apply (symbol-function ',function) args))))
 
-(defun create-transparent-defun (function wrapper wrapping-package)
+(defun create-transparent-defun (function wrapper wrapping-package
+                                 &key force-rest alt-name)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
     
     ;; fall-through: give up on transparency
     (when (eql arglist :unknown)
       (return-from create-transparent-defun
-        (create-basic-defun function wrapper wrapping-package)))
+        (create-basic-defun function wrapper wrapping-package
+                            :alt-name alt-name)))
     
     (multiple-value-bind
           (required &optional &rest &key &aux)
         (organize-arguments arglist)
       (declare (ignore &aux))
+      (when (and force-rest
+                 (null &rest)
+                 (or &key
+                     ;; MUST pass possibly unknown args through
+                     (member '&allow-other-keys arglist)))
+        (setf &rest (list (gensym "REST"))))
       (let ((optional->supplied
              (loop for optional in (create-optional-params &optional)
                 collect
@@ -98,15 +109,33 @@
                    (gensym (symbol-name (if (atom key)
                                             key
                                             (second key))))))))
-        `(defun ,(intern (princ-to-string function) wrapping-package)
+        `(defun ,(or alt-name
+                     (intern (princ-to-string function) wrapping-package))
              (,@required
               ,@(when &optional `(&optional
                                   ,@(loop for optional in optional->supplied
                                        collect `(,(car optional) nil ,(cdr optional)))))
               ,@(when &rest `(&rest ,@&rest))
               ,@(when &key `(&key ,@(loop for key in key->supplied
-                                       collect `(,(car key) nil ,(cdr key)))))
-              ,@(when (member '&allow-other-keys arglist) `(&allow-other-keys)))
+                                       collect
+                                         (if &rest
+                                             (let ((thing (car key)))
+                                               (if (atom thing)
+                                                   thing
+                                                   (list thing)))
+                                             `(,(car key) nil ,(cdr key))))))
+              ,@(when (member '&allow-other-keys arglist)
+                      (if (null &key)
+                          `(&key &allow-other-keys)
+                          `(&allow-other-keys))))
+           ,@(when &rest
+                   (list
+                    `(declare (ignore ,@(loop for key in key->supplied
+                                             collect
+                                             (let ((thing (car key)))
+                                                     (if (atom thing)
+                                                         thing
+                                                         (second thing))))))))
            ,(let ((non-optional-portion
                    (cond
                      (&rest
