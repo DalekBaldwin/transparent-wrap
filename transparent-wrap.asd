@@ -25,4 +25,4 @@
                          (:file "wrapping")
                          (:file "transparent-wrap-test"))
             :serial t))
-  :depends-on (:transparent-wrap :stefil))
+  :depends-on (:transparent-wrap :stefil :alexandria))
