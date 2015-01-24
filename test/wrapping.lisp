@@ -20,4 +20,5 @@
                       (fboundp symbol))
                 collect
                   (transparent-wrap:create-transparent-defun
-                   symbol #'wrap :transparent-wrap-test.wrapping))))
+                   symbol #'wrap :transparent-wrap-test.wrapping
+                   :force-rest t))))
