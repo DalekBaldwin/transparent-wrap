@@ -18,7 +18,22 @@
    #:required-rest
    #:required-rest-aux
    #:required-rest-key
-   #:required-rest-key-aux))
+   #:required-rest-key-aux
+   
+   #:optional
+   #:optional-aux
+   #:optional-rest
+   #:optional-rest-aux
+   #:optional-rest-key
+   #:optional-rest-key-aux
+   #:optional-key
+   #:optional-key-aux
+   #:key
+   #:key-aux
+   #:rest_
+   #:rest-aux
+   #:rest-key
+   #:rest-key-aux))
 
 (in-package :transparent-wrap-test.original)
 
@@ -134,3 +149,92 @@
        ((:z f)) ((:y g) :g-default) ((:x h) :h-default h-supplied)
      &aux (i (list a b c d e e-supplied f g h h-supplied rest)))
   (list a b c d e e-supplied f g h h-supplied rest i))
+
+(defun optional
+    (&optional a (b :b-default) (c :c-default c-supplied))
+  (list a b c c-supplied))
+
+(defun optional-aux
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &aux (d (list a b c)))
+  (list a b c c-supplied d))
+
+(defun optional-rest
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &rest rest)
+  (list a b c c-supplied rest))
+
+(defun optional-rest-aux
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &rest rest
+     &aux (d (list a b c rest)))
+  (list a b c c-supplied rest d))
+
+(defun optional-rest-key
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &rest rest
+     &key d (e :e-default) (f :f-default f-supplied)
+       ((:z g)) ((:y h) :h-default)
+       ((:x i) :i-default i-supplied))
+  (list a b c c-supplied rest d e f f-supplied g h i i-supplied))
+
+(defun optional-rest-key-aux
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &rest rest
+     &key d (e :e-default) (f :f-default f-supplied)
+       ((:z g)) ((:y h) :h-default)
+       ((:x i) :i-default i-supplied)
+     &aux (j (list a b c c-supplied rest d e f f-supplied g h i i-supplied)))
+  (list a b c c-supplied rest d e f f-supplied g h i i-supplied j))
+
+(defun optional-key
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &key d (e :e-default) (f :f-default f-supplied)
+       ((:z g)) ((:y h) :h-default)
+       ((:x i) :i-default i-supplied))
+  (list a b c c-supplied d e f f-supplied g h i i-supplied))
+
+(defun optional-key-aux
+    (&optional a (b :b-default) (c :c-default c-supplied)
+     &key d (e :e-default) (f :f-default f-supplied)
+       ((:z g)) ((:y h) :h-default)
+       ((:x i) :i-default i-supplied)
+     &aux (j (list a b c c-supplied d e f f-supplied g h i i-supplied)))
+  (list a b c c-supplied d e f f-supplied g h i i-supplied j))
+
+(defun key
+    (&key a (b :b-default) (c :c-default c-supplied)
+       ((:z d)) ((:y e) :e-default)
+       ((:x f) :f-default f-supplied))
+  (list a b c c-supplied d e f f-supplied))
+
+(defun key-aux
+    (&key a (b :b-default) (c :c-default c-supplied)
+       ((:z d)) ((:y e) :e-default)
+       ((:x f) :f-default f-supplied)
+     &aux (g (list a b c c-supplied d e f f-supplied)))
+  (list a b c c-supplied d e f f-supplied g))
+
+(defun rest_
+    (&rest rest)
+  (list rest))
+
+(defun rest-aux
+    (&rest rest
+     &aux (a (list rest)))
+  (list rest a))
+
+(defun rest-key
+    (&rest rest
+     &key a (b :b-default) (c :c-default c-supplied)
+       ((:z d)) ((:y e) :e-default)
+       ((:x f) :f-default f-supplied))
+  (list a b c c-supplied d e f f-supplied rest))
+
+(defun rest-key-aux
+    (&rest rest
+     &key a (b :b-default) (c :c-default c-supplied)
+       ((:z d)) ((:y e) :e-default)
+       ((:x f) :f-default f-supplied)
+     &aux (g (list a b c c-supplied d e f f-supplied rest)))
+  (list a b c c-supplied d e f f-supplied rest g))
