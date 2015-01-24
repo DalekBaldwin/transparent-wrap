@@ -183,7 +183,9 @@
              (,@required
               ,@(when &optional `(&optional
                                   ,@(loop for optional in optional->supplied
-                                       collect `(,(car optional) nil ,(cdr optional)))))
+                                       collect `(,(car optional)
+                                                  nil
+                                                  ,(cdr optional)))))
               ,@(when &rest `(&rest ,@&rest))
               ,@(when &key `(&key ,@(loop for key in key->supplied
                                        collect
@@ -205,11 +207,9 @@
                                                      (if (atom thing)
                                                          thing
                                                          (second thing))))))))
-           ,(funcall body-maker function required optional->supplied &rest key->supplied)
-           #+nil
            ,(funcall
-             wrapper
-             (create-body function required optional->supplied &rest key->supplied)))))))
+             body-maker
+             function required optional->supplied &rest key->supplied))))))
 
 (defun create-transparent-defun (function wrapper wrapping-package
                                  &key force-rest alt-name)
