@@ -37,6 +37,7 @@ For some argument lists, this imposes a considerable overhead, since we have to 
 There is also a convenience macro so you don't have to quote or sharp-quote anything, as long as you define the wrapping code as a macro. Here are all the variations:
 
 ```lisp
+;; function
 (create-transparent-defun 'package:function
                           (lambda (code)
                             `(wrap ,code))
@@ -46,11 +47,13 @@ There is also a convenience macro so you don't have to quote or sharp-quote anyt
 ```lisp
 (defmacro wrapper (code)
   `(wrap ,code))
-  
+
+;; macro
 (transparent-defun package:function wrapper :wrapping-package)
 ```
 
 ```lisp
+;; function
 (create-transparent-defmacro package:macro
                              (lambda (code)
                                ``(wrap ,,code))
@@ -61,5 +64,6 @@ There is also a convenience macro so you don't have to quote or sharp-quote anyt
 (defmacro wrapper (code)
   `(wrap ,code))
 
-(transparent-defmacro package:macro wrapper :wraping-package )
+;; macro
+(transparent-defmacro package:macro wrapper :wrapping-package )
 ```
