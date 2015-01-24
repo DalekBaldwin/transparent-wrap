@@ -250,9 +250,6 @@
        (&rest args)
      (,wrapper `(,',macro ,@args))))
 
-;; This &whole trick isn't strictly correct because you can still give &whole
-;; a destructuring pattern instead of a single variable. But why would anybody
-;; do such a thing when that's what the regular arguments are for?
 (defun create-transparent-defmacro (macro wrapper wrapping-package)
   (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
          (whole-p (member '&whole arglist))
@@ -260,13 +257,23 @@
                     (second whole-p)
                     (gensym "WHOLE"))))
     `(defmacro ,(intern (princ-to-string macro) wrapping-package)
-         ,(if whole-p
-              arglist
-              (append `(&whole ,whole) arglist))
+         ,(cond (;; The &whole trick isn't strictly correct because you can
+                 ;; still give &whole a destructuring pattern instead of a
+                 ;; single variable. But why would anybody do such a thing when
+                 ;; that's what the regular arguments are for? Regardless,
+                 ;; here's a fallthrough case that gives up on transparency.
+                 (listp whole)
+                 `(&rest args))
+                ((and (symbolp whole)
+                      (not (symbol-package whole)))
+                 (append `(&whole ,whole) arglist))
+                (t arglist))
        ;; to-do: parse actual signature well enough to avoid warnings about
        ;; unused arguments
-       ,(funcall wrapper
-         ``(,',macro ,@(rest ,whole))))))
+       ,(if (listp whole)
+            (funcall wrapper ``(,',macro ,@args))
+            (funcall wrapper
+                     ``(,',macro ,@(rest ,whole)))))))
 
 (defmacro transparent-defmacro (macro wrapper wrapping-package)
   (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
@@ -275,10 +282,16 @@
                     (second whole-p)
                     (gensym "WHOLE"))))
     `(defmacro ,(intern (princ-to-string macro) wrapping-package)
-         ,(if whole-p
-              arglist
-              (append `(&whole ,whole) arglist))
-       ;; to-do: parse actual signature well enough to avoid warnings about
-       ;; unused arguments
-       `(,',wrapper
-         (,',macro ,@(rest ,whole))))))
+         ,(cond (;; same as in function version
+                 (listp whole)
+                 `(&rest args))
+                ((and (symbolp whole)
+                      (not (symbol-package whole)))
+                 (append `(&whole ,whole) arglist))
+                (t arglist))
+       ,(if (listp whole)
+            `(,wrapper `(,',macro ,@args))
+            ;; to-do: parse actual signature well enough to avoid warnings about
+            ;; unused arguments
+            ``(,',wrapper
+               (,',macro ,@(rest ,whole)))))))
