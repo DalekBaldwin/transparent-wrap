@@ -136,18 +136,16 @@
                                                      (if (atom thing)
                                                          thing
                                                          (second thing))))))))
-           ,(let ((non-optional-portion
-                   (cond
-                     (&rest
-                      (funcall
-                       wrapper
+           ,(funcall
+             wrapper
+             (let ((non-optional-portion
+                    (cond
+                      (&rest
                        `(apply (symbol-function ',function)
                                ,@required
                                ,@(mapcar #'car optional->supplied)
-                               ,@&rest)))
-                     (&key
-                      (funcall
-                       wrapper
+                               ,@&rest))
+                      (&key
                        `(apply (symbol-function ',function)
                                ,@required
                                ,@(mapcar #'car optional->supplied)
@@ -176,34 +174,32 @@
                                     do
                                       (push arg actual-keys)
                                       (push key actual-keys))
-                                 actual-keys))))
-                     (t (funcall wrapper
-                                 `(,function
-                                   ,@required
-                                   ,@(mapcar #'car optional->supplied)))))))
-                 (if (null &optional)
-                     non-optional-portion
-                     `(case (count-until-false
-                             (list ,@(loop for optional in optional->supplied
-                                        collect (cdr optional))))
-                        ,@(loop for optional in optional->supplied
-                             counting optional into i
-                             collect
-                               `(,(1- i)
-                                  ,(funcall wrapper
-                                            `(,function
-                                              ,@required
-                                              ,@(mapcar
-                                                 #'car
-                                                 (subseq optional->supplied 0 (1- i))))))
-                             into cases
-                             finally
-                               (return
-                                 (append
-                                  cases
-                                  (list
-                                   `(otherwise
-                                     ,non-optional-portion)))))))))))))
+                                 actual-keys)))
+                      (t `(,function
+                           ,@required
+                           ,@(mapcar #'car optional->supplied))))))
+                   (if (null &optional)
+                       non-optional-portion
+                       `(case (count-until-false
+                               (list ,@(loop for optional in optional->supplied
+                                          collect (cdr optional))))
+                          ,@(loop for optional in optional->supplied
+                               counting optional into i
+                               collect
+                                 `(,(1- i)
+                                    (,function
+                                     ,@required
+                                     ,@(mapcar
+                                        #'car
+                                        (subseq optional->supplied 0 (1- i)))))
+                               into cases
+                               finally
+                                 (return
+                                   (append
+                                    cases
+                                    (list
+                                     `(otherwise
+                                       ,non-optional-portion))))))))))))))
 
 ;; Macro wrappers should look like this:
 ;; (lambda (macro-body) ``(wrap-something-around ,,macro-body))
