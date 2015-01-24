@@ -3,9 +3,10 @@
 (defpackage :transparent-wrap
   (:use :cl)
   (:export
-   :create-basic-defun
+   :create-opaque-defun
    :create-transparent-defun
-   :create-basic-defmacro))
+   :transparent-defun
+   :create-opaque-defmacro))
 
 (in-package :transparent-wrap)
 
