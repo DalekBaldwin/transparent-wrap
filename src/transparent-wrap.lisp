@@ -63,6 +63,9 @@
       finally (return total))
    0))
 
+;; Funcion wrappers should look like:
+;; (lambda (form) `(wrap-something-around ,form))
+
 (defun create-basic-defun (function wrapper wrapping-package)
   `(defun ,(intern (princ-to-string function) wrapping-package)
        (&rest args)
@@ -88,67 +91,80 @@
              (loop for k in (create-keyword-params key)
                 collect
                   (cons k (gensym (symbol-name (if (atom k) k (second k))))))))
-        (labels ((create-call-optional (optional)
-                   `(,function
-                     ,@required
-                     ,@optional)))
-          `(defun ,(intern (princ-to-string function) wrapping-package)
-               (,@required
-                ,@(when optional `(&optional
-                                   ,@(loop for o in optional->supplied
-                                        collect `(,(car o) nil ,(cdr o)))))
-                ,@(when rest `(&rest ,@rest))
-                ,@(when key `(&key ,@(loop for k in key->supplied
-                                        collect `(,(car k) nil ,(cdr k)))))
-                ,@(when (member '&allow-other-keys arglist) `(&allow-other-keys)))
-             (case (count-until-false
-                    (list ,@(loop for o in optional->supplied
-                               collect (cdr o))))
-               ,@(loop for o in optional->supplied
-                    counting o into i
-                    collect
-                      `(,(1- i)
-                         ,(funcall wrapper
-                           `(,function
-                             ,@required
-                             ,@(mapcar #'car
-                                       (subseq optional->supplied 0 (1- i)))))) into cases
-                    finally
-                      (return (append
-                               cases
-                               (list
-                                `(otherwise
-                                  ,(cond
-                                    (rest
-                                     (funcall wrapper
-                                      `(apply (symbol-function ',function)
-                                              ,@required
-                                              ,@(mapcar #'car optional->supplied)
-                                              ,@rest)))
-                                    (key
-                                     (funcall wrapper
-                                      `(apply (symbol-function ',function)
-                                              ,@required
-                                              ,@(mapcar #'car optional->supplied)
-                                              (let ((actual-keys))
-                                                (loop
-                                                   for supplied in (list ,@(loop for k in key->supplied collect (cdr k)))
-                                                   for arg in (list ,@(loop for k in key->supplied collect
-                                                                           (let ((thing (car k)))
-                                                                             (if (atom thing)
-                                                                                 thing
-                                                                                 (second thing)))))
-                                                   for k in (list ,@(loop for k in key->supplied collect
-                                                                         (let ((thing (car k)))
-                                                                           (if (atom thing)
-                                                                               (intern (symbol-name thing) :keyword)
-                                                                               (first thing)))))
-                                                   when supplied do (push k actual-keys) (push arg actual-keys))
-                                                (nreverse actual-keys)))))
-                                    (t (funcall wrapper
-                                                `(,function
-                                                  ,@required
-                                                  ,@(mapcar #'car optional->supplied)))))))))))))))))
+        `(defun ,(intern (princ-to-string function) wrapping-package)
+             (,@required
+              ,@(when optional `(&optional
+                                 ,@(loop for o in optional->supplied
+                                      collect `(,(car o) nil ,(cdr o)))))
+              ,@(when rest `(&rest ,@rest))
+              ,@(when key `(&key ,@(loop for k in key->supplied
+                                      collect `(,(car k) nil ,(cdr k)))))
+              ,@(when (member '&allow-other-keys arglist) `(&allow-other-keys)))
+           (case (count-until-false
+                  (list ,@(loop for o in optional->supplied
+                             collect (cdr o))))
+             ,@(loop for o in optional->supplied
+                  counting o into i
+                  collect
+                    `(,(1- i)
+                       ,(funcall wrapper
+                         `(,function
+                           ,@required
+                           ,@(mapcar
+                              #'car
+                              (subseq optional->supplied 0 (1- i))))))
+                  into cases
+                  finally
+                    (return
+                      (append
+                       cases
+                       (list
+                        `(otherwise
+                          ,(cond
+                            (rest
+                             (funcall
+                              wrapper
+                              `(apply (symbol-function ',function)
+                                      ,@required
+                                      ,@(mapcar #'car optional->supplied)
+                                      ,@rest)))
+                            (key
+                             (funcall
+                              wrapper
+                              `(apply (symbol-function ',function)
+                                      ,@required
+                                      ,@(mapcar #'car optional->supplied)
+                                      (let ((actual-keys))
+                                        (loop
+                                           for supplied in
+                                             (list ,@(loop for k in key->supplied
+                                                        collect (cdr k)))
+                                           for arg in
+                                             (list ,@(loop for k in key->supplied
+                                                        collect
+                                                          (let ((thing (car k)))
+                                                            (if (atom thing)
+                                                                thing
+                                                                (second thing)))))
+                                           for k in
+                                             (list ,@(loop for k in key->supplied
+                                                        collect
+                                                          (let ((thing (car k)))
+                                                            (if (atom thing)
+                                                                (intern
+                                                                 (symbol-name thing)
+                                                                 :keyword)
+                                                                (first thing)))))
+                                           when supplied
+                                           do (push k actual-keys) (push arg actual-keys))
+                                        (nreverse actual-keys)))))
+                            (t (funcall wrapper
+                                        `(,function
+                                          ,@required
+                                          ,@(mapcar #'car optional->supplied))))))))))))))))
+
+;; Macro wrappers should look like:
+;; (lambda (form) ``(wrap-something-around ,,form))
 
 (defun create-basic-defmacro (macro wrapper wrapping-package)
   `(defmacro ,(intern (princ-to-string macro) wrapping-package)
