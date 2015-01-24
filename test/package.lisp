@@ -1,14 +1,14 @@
-(in-package :cl-user)
+(in-package #:cl-user)
 
-(defpackage :transparent-wrap-test
-  (:use :cl :transparent-wrap :stefil :alexandria)
+(defpackage #:transparent-wrap-test
+  (:use #:cl #:transparent-wrap #:stefil #:alexandria)
   (:export
    #:test-all))
 
-(in-package :transparent-wrap-test)
+(in-package #:transparent-wrap-test)
 
 (defparameter *system-directory*
   (make-pathname
    :directory 
    (pathname-directory
-    (asdf:system-definition-pathname :transparent-wrap))))
+    (asdf:system-definition-pathname "transparent-wrap"))))

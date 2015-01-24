@@ -1,5 +1,5 @@
-(defpackage :transparent-wrap-test.original
-  (:use :cl)
+(defpackage #:transparent-wrap-test.original
+  (:use #:cl)
   (:export
    #:no-params
    #:no-params-aux
@@ -34,7 +34,7 @@
    #:rest-key
    #:rest-key-aux))
 
-(in-package :transparent-wrap-test.original)
+(in-package #:transparent-wrap-test.original)
 
 (defun no-params () nil)
 
