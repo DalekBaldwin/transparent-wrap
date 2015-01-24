@@ -250,6 +250,9 @@
        (&rest args)
      (,wrapper `(,',macro ,@args))))
 
+;; This &whole trick isn't strictly correct because you can still give &whole
+;; a destructuring pattern instead of a single variable. But why would anybody
+;; do such a thing when that's what the regular arguments are for?
 (defun create-transparent-defmacro (macro wrapper wrapping-package)
   (let* ((arglist (trivial-arguments:arglist (macro-function macro)))
          (whole-p (member '&whole arglist))
