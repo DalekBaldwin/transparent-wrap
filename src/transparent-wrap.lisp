@@ -90,10 +90,13 @@
             (key->supplied
              (loop for key in (create-keyword-params &key)
                 collect
-                  (cons key
-                        (gensym (symbol-name (if (atom key)
-                                                 key
-                                                 (second key))))))))
+                  (cons
+                   #-ccl key
+                   #+ccl ;; CCL returns keyword symbol and no other info
+                   (intern (symbol-name key) wrapping-package)
+                   (gensym (symbol-name (if (atom key)
+                                            key
+                                            (second key))))))))
         `(defun ,(intern (princ-to-string function) wrapping-package)
              (,@required
               ,@(when &optional `(&optional
