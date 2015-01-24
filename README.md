@@ -2,8 +2,6 @@
 
 This is a small utility for writing wrapper functions with the same signature as the functions they wrap so that you can still interactively see the same function signature in the SLIME minibuffer.
 
-so that you can create wrapper packages and still interactively see signature info in SLIME.
-
 So if lots of functionality in a package is breaking because of some trivial incompatibility with your Lisp environment, you can do something like this:
 
 ```lisp
@@ -34,3 +32,4 @@ For some argument lists, this imposes a considerable overhead, since we have to 
 1. Set the keyword argument `:force-rest` to `t` in `create-transparent-defun`. This adds a `&rest` parameter when wrapping functions with `&key` arguments but no `&rest` argument so the keyword arguments can be passed through with `apply` without checking which ones are present.
 
 2. When turning a development build into a production build, you can swap out `create-transparent-defun` for `create-basic-defun` to include the same wrapping logic but strip out all the infrastructure for imitating the function signature.
+h
