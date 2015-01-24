@@ -73,6 +73,10 @@
      ,(funcall wrapper
                `(apply (symbol-function ',function) args))))
 
+;; Function-wrapping macros should look like normal macros:
+;; (defmacro wrapper (wrapped-function-form)
+;;   `(wrap-something-around ,wrapped-function-form))
+
 (defmacro opaque-defun (function wrapper wrapping-package &key alt-name)
   `(defun ,(or alt-name
                (intern (princ-to-string function) wrapping-package))
@@ -226,6 +230,8 @@
    :force-rest force-rest :alt-name alt-name
    :body-maker (lambda (function required optional rest key)
      `(,wrapper ,(create-body function required optional rest key)))))
+
+
 
 ;; Macro-wrapping functional arguments should look like this:
 ;; (lambda (wrapped-macro-form) ``(wrap-something-around ,,wrapped-macro-form))
