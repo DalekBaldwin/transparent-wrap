@@ -19,6 +19,5 @@
                            (find-package :transparent-wrap-test.original))
                       (fboundp symbol))
                 collect
-                  (transparent-wrap:create-transparent-defun
-                   symbol #'wrap :transparent-wrap-test.wrapping
-                   :force-rest t))))
+                  (transparent-wrap:create-basic-defun
+                   symbol #'wrap :transparent-wrap-test.wrapping))))
