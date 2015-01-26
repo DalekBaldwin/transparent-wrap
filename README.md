@@ -75,10 +75,10 @@ Usage
   `(wrap ,code))
 
 ;; macro
-(transparent-defmacro package:macro wrapper :wrapping-package )
+(transparent-defmacro package:macro wrapper :wrapping-package)
 ```
 
 Limitations
 -----------
 
-This repo uses `trivial-arguments` to retrieve function and macro signatures. On some implementations, this will not retrieve default arguments for some parameters. When no signature can be found, falls back to basic `opaque-defun` functionality and creates a wrapper with a `&rest` parameter only.
+This repo uses `trivial-arguments` to retrieve function and macro signatures. On some implementations, this will not retrieve default arguments for some parameters. When no signature can be found, `transparent-wrap` falls back to basic `opaque-defun` functionality and creates a wrapper with a `&rest` parameter only.
