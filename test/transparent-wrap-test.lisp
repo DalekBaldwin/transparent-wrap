@@ -8,15 +8,15 @@
   `(progn
      (is
       (equal
-       (let ((transparent-wrap-test.original::*state* nil))
+       (let ((transparent-wrap-test.stateful::*state* nil))
          (multiple-value-list (,(find-symbol
                                  (symbol-name function-name)
-                                 :transparent-wrap-test.original)
+                                 :transparent-wrap-test.stateful)
                                 ,@args)))
-       (let ((transparent-wrap-test.original::*state* nil))
+       (let ((transparent-wrap-test.stateful::*state* nil))
          (multiple-value-list (,(find-symbol
                                  (symbol-name function-name)
-                                 :transparent-wrap-test.wrapping)
+                                 :transparent-wrap-test.stateful-wrap)
                                 ,@args)))))
      (is
       (equal
@@ -347,7 +347,7 @@
 
 #.
 `(progn
-   ,@(loop for sym being the symbols of :transparent-wrap-test.wrapping
+   ,@(loop for sym being the symbols of :transparent-wrap-test.stateful
         when (starts-with-subseq "OPTIONAL-MATRIX" (symbol-name sym))
           collect
           `(deftest ,(intern

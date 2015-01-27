@@ -36,7 +36,7 @@
   :components
   ((:module :test
             :components ((:file "package")
-                         (:file "original")
+                         (:file "stateful")
                          (:file "functional")
                          (:file "wrapping")
                          (:file "transparent-wrap-test"))

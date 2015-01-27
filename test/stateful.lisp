@@ -1,4 +1,4 @@
-(defpackage :transparent-wrap-test.original
+(defpackage :transparent-wrap-test.stateful
   (:use :cl)
   (:export
    #:no-params
@@ -37,7 +37,7 @@
    #:alternating-optional-supplied
    ))
 
-(in-package :transparent-wrap-test.original)
+(in-package :transparent-wrap-test.stateful)
 
 (defparameter *state* nil)
 
@@ -294,7 +294,7 @@
 #.
 `(progn
    ,@(let ((combinations)
-           (arguments '(a b c)))
+           (arguments '(a b c d)))
           (loop for i from 0 to (length arguments)
              do (alexandria:map-combinations
                  (lambda (init-forms)
@@ -314,7 +314,7 @@
                                      (apply #'concatenate 'string
                                             (loop for arg in supplieds
                                                collect (princ-to-string arg))))
-                                    :transparent-wrap-test.original)
+                                    :transparent-wrap-test.stateful)
                                   (&optional
                                      (a
                                       ,(if (member 'a init-forms)
@@ -333,13 +333,21 @@
                                            `(push :c-init *state*)
                                            nil)
                                       ,@(when (member 'c supplieds)
-                                              `(c-supplied))))
+                                              `(c-supplied)))
+                                     (d
+                                      ,(if (member 'd init-forms)
+                                           `(push :d-init *state*)
+                                           nil)
+                                      ,@(when (member 'd supplieds)
+                                              `(d-supplied))))
                                 (values a ,@(when (member 'a supplieds)
                                                   `(a-supplied))
                                         b ,@(when (member 'b supplieds)
                                                   `(b-supplied))
                                         c ,@(when (member 'c supplieds)
                                                   `(c-supplied))
+                                        d ,@(when (member 'd supplieds)
+                                                  `(d-supplied))
                                         *state*))
                              combinations))
                           arguments :length j)))
