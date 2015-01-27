@@ -327,3 +327,19 @@
                      arguments :length i))
             (reverse (mapcar #'flatten combinations)))
           collect `(do-test :rest-key-aux ,@combination)))
+
+(deftest test-alternating-optional-supplied ()
+  (do-test :alternating-optional-supplied)
+  (do-test :alternating-optional-supplied 1)
+  (do-test :alternating-optional-supplied 1 2)
+  (do-test :alternating-optional-supplied 1 2 3))
+
+#.
+`(deftest test-optional-combinations ()
+  ,@(loop for sym being the symbols of :transparent-wrap-test.wrapping
+         when (starts-with-subseq "OPTIONAL-MATRIX" (symbol-name sym))
+         appending
+         `((do-test ,sym)
+           (do-test ,sym 1)
+           (do-test ,sym 1 2)
+           (do-test ,sym 1 2 3))))

@@ -1,7 +1,7 @@
 (defpackage :transparent-wrap-test.wrapping
   (:use :cl)
   #.`(:export
-      ,@(loop for symbol being the external-symbols of :transparent-wrap-test.original
+      ,@(loop for symbol being the symbols of :transparent-wrap-test.original
            when (and (fboundp symbol)
                      (eql (symbol-package symbol) (find-package :transparent-wrap-test.original)))
            collect symbol)))
@@ -13,7 +13,7 @@
                     `(progn
                        :do-nothing
                        ,form)))
-             (loop for symbol being the external-symbols of :transparent-wrap-test.original
+             (loop for symbol being the symbols of :transparent-wrap-test.original
                 when (and
                       (eql (symbol-package symbol)
                            (find-package :transparent-wrap-test.original))

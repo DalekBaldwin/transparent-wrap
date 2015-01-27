@@ -32,7 +32,10 @@
    #:rest_
    #:rest-aux
    #:rest-key
-   #:rest-key-aux))
+   #:rest-key-aux
+   
+   #:alternating-optional-supplied
+   ))
 
 (in-package :transparent-wrap-test.original)
 
@@ -280,3 +283,64 @@
      &aux g (h (push (list a b c c-supplied d e f f-supplied rest g) *state*)))
   (push :body *state*)
   (values a b c c-supplied d e f f-supplied rest g h *state*))
+
+(defun alternating-optional-supplied
+    (&optional
+       (a nil a-supplied)
+       b
+       (c nil c-supplied))
+  (values a a-supplied b c c-supplied))
+
+#.
+`(progn
+   ,@(let ((combinations)
+           (arguments '(a b c)))
+          (loop for i from 0 to (length arguments)
+             do (alexandria:map-combinations
+                 (lambda (init-forms)
+                   (loop for j from 0 to (length arguments)
+                      do (alexandria:map-combinations
+                          (lambda (supplieds)
+                            (push
+                             `(defun
+                                  ,(intern
+                                    (concatenate
+                                     'string
+                                     "OPTIONAL-MATRIX-I"
+                                     (apply #'concatenate 'string
+                                            (loop for arg in init-forms
+                                               collect (princ-to-string arg)))
+                                     "-S"
+                                     (apply #'concatenate 'string
+                                            (loop for arg in supplieds
+                                               collect (princ-to-string arg))))
+                                    :transparent-wrap-test.original)
+                                  (&optional
+                                     (a
+                                      ,(if (member 'a init-forms)
+                                           `(push :a-init *state*)
+                                           nil)
+                                      ,@(when (member 'a supplieds)
+                                              `(a-supplied)))
+                                     (b
+                                      ,(if (member 'b init-forms)
+                                           `(push :b-init *state*)
+                                           nil)
+                                      ,@(when (member 'b supplieds)
+                                              `(b-supplied)))
+                                     (c
+                                      ,(when (member 'c init-forms)
+                                             `(push :c-init *state*))
+                                      ,@(when (member 'c supplieds)
+                                              `(c-supplied))))
+                                (values a ,@(when (member 'a supplieds)
+                                                  `(a-supplied))
+                                        b ,@(when (member 'b supplieds)
+                                                  `(b-supplied))
+                                        c ,@(when (member 'c supplieds)
+                                                  `(c-supplied))
+                                        *state*))
+                             combinations))
+                          arguments :length j)))
+                 arguments :length i))
+          combinations))
