@@ -1,6 +1,7 @@
 (in-package :transparent-wrap)
 
 (defparameter *allow-init-forms* nil)
+(defparameter *force-rest* nil)
 
 (defun organize-arguments (arglist)
   (let ((directives (list '&optional '&rest '&key '&allow-other-keys '&aux))
@@ -142,7 +143,7 @@
                         ,non-optional-portion)))))))))
 
 (defun create-transparent-defun% (function wrapper wrapping-package
-                                  &key force-rest alt-name body-maker)
+                                  &key alt-name body-maker)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
     
     ;; fall-through: give up on transparency
@@ -216,7 +217,7 @@
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
       (setf init-forms-okay-seq (nreverse init-forms-okay-seq))
       (when (and (null &rest)
-                 (or force-rest
+                 (or *force-rest*
                      ;; MUST pass possibly unknown args through
                      &allow-other-keys))
         (setf &rest (list (make-rest-param :name (gensym "REST")))))
@@ -255,10 +256,10 @@
            function &required &optional &rest &key init-forms-okay-seq)))))
 
 (defun create-transparent-defun (function wrapper wrapping-package
-                                 &key force-rest alt-name)
+                                 &key ((:force-rest *force-rest*) *force-rest*) alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
-   :force-rest force-rest :alt-name alt-name
+   :alt-name alt-name
    :body-maker
    (lambda (function required optional rest key init-forms-okay-seq)
      (funcall
@@ -266,10 +267,10 @@
       (create-body function required optional rest key init-forms-okay-seq)))))
 
 (defmacro transparent-defun (function wrapper wrapping-package
-                             &key force-rest alt-name)
+                             &key ((:force-rest *force-rest*) *force-rest*) alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
-   :force-rest force-rest :alt-name alt-name
+   :alt-name alt-name
    :body-maker
    (lambda (function required optional rest key init-forms-okay-seq)
      `(,wrapper
