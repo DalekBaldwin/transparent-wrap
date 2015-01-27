@@ -79,8 +79,10 @@
              when (member optional init-forms-okay-seq)
              collect optional))
          (non-init-formable-optionals
-          (set-difference &optional init-formable-optionals))
-         (non-optional-portion
+          (loop for optional in &optional
+               unless (member optional init-formable-optionals)
+               collect optional))
+         (all-optionals-present-cases
           (cond
             (&rest
              `(apply (symbol-function ',function)
@@ -120,7 +122,7 @@
                  ,@(mapcar #'required-param-name &required)
                  ,@(mapcar #'optional-param-name &optional))))))
     (if (null non-init-formable-optionals)
-        non-optional-portion
+        all-optionals-present-cases
         `(case (count-until-false
                 (list ,@(loop for optional in non-init-formable-optionals
                            collect (optional-param-supplied-p-parameter optional))))
@@ -143,7 +145,7 @@
                      cases
                      (list
                       `(otherwise
-                        ,non-optional-portion)))))))))
+                        ,all-optionals-present-cases)))))))))
 
 (defun create-transparent-defun% (function wrapper wrapping-package
                                   &key alt-name body-maker)

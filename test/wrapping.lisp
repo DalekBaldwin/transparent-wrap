@@ -22,6 +22,18 @@
                   (transparent-wrap:create-transparent-defun
                    symbol #'wrap :transparent-wrap-test.stateful-wrap))))
 
+#+nil
+(transparent-wrap-test.functional:required-optional-rest-key   a b  )
+#+nil
+(transparent-wrap-test.functional:required-optional-rest-key   c  )
+#+nil
+(format t "~&~S~%"
+        (transparent-wrap:create-transparent-defun
+         'transparent-wrap-test.functional:required-optional-rest-key
+         (lambda (form) `(progn :do-nothing ,form))
+         :transparent-wrap-test.functional-wrap))
+
+
 (defpackage :transparent-wrap-test.functional-wrap
   (:use :cl)
   #.`(:export
