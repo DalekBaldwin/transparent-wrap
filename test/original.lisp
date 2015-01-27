@@ -38,43 +38,52 @@
 
 (defparameter *state* nil)
 
-(defun no-params () nil)
+(defun no-params ()
+  (push :body *state*)
+  *state*)
 
 (defun no-params-aux (&aux a (b (push a *state*)))
-  a b)
+  (push :body *state*)
+  (values a b *state*))
 
 (defun required
     (a b)
-  (values a b))
+  (push :body *state*)
+  (values a b *state*))
 
 (defun required-aux
     (a b
      &aux c (d (push (list a b c) *state*)))
-  (values a b c d))
+  (push :body *state*)
+  (values a b c d *state*))
 
 (defun required-optional
     (a b
      &optional c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied))
-  (values a b c d e e-supplied))
+  (push :body *state*)
+  (values a b c d e e-supplied *state*))
 
 (defun required-optional-aux
     (a b
      &optional c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied)
      &aux f (g (push (list a b c d e e-supplied f) *state*)))
-  (values a b c d e e-supplied f g))
+  (push :body *state*)
+  (values a b c d e e-supplied f g *state*))
 
 (defun required-optional-rest
     (a b
      &optional c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied)
      &rest rest)
-  (values a b c d e e-supplied rest))
+  (push :body *state*)
+  (values a b c d e e-supplied rest *state*))
 
 (defun required-optional-rest-aux
     (a b
      &optional c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied)
      &rest rest
      &aux f (g (push (list a b c d e e-supplied rest f) *state*)))
-  (values a b c d e e-supplied rest f g))
+  (push :body *state*)
+  (values a b c d e e-supplied rest f g *state*))
 
 (defun required-optional-rest-key
     (a b
@@ -83,7 +92,8 @@
      &key f (g (push :g-default *state*)) (h (push :h-default *state*) h-supplied)
        ((:z i)) ((:y j) (push :j-default *state*))
        ((:x k) (push :k-default *state*) k-supplied))
-  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest *state*))
 
 (defun required-optional-rest-key-aux
     (a b
@@ -94,7 +104,8 @@
        ((:x k) (push :k-default *state*) k-supplied)
      &aux l (m (push (list a b c d e e-supplied f g h
                            h-supplied i j k k-supplied rest l) *state*)))
-  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest l m))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied rest l m *state*))
 
 (defun required-optional-key
     (a b
@@ -102,7 +113,8 @@
      &key f (g (push :g-default *state*)) (h (push :h-default *state*) h-supplied)
        ((:z i)) ((:y j) (push :j-default *state*))
        ((:x k) (push :k-default *state*) k-supplied))
-  (values a b c d e e-supplied f g h h-supplied i j k k-supplied))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied *state*))
 
 (defun required-optional-key-aux
     (a b
@@ -112,14 +124,16 @@
        ((:x k) (push :k-default *state*) k-supplied)
      &aux l (m (push (list a b c d e e-supplied f g h
                            h-supplied i j k k-supplied l) *state*)))
-  (values a b c d e e-supplied f g h h-supplied i j k k-supplied l m))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied i j k k-supplied l m *state*))
 
 (defun required-key
     (a b
      &key c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied)
        ((:z f)) ((:y g) (push :g-default *state*))
        ((:x h) (push :h-default *state*) h-supplied))
-  (values a b c d e e-supplied f g h h-supplied))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied *state*))
 
 (defun required-key-aux
     (a b
@@ -127,18 +141,21 @@
        ((:z f)) ((:y g) (push :g-default *state*))
        ((:x h) (push :h-default *state*) h-supplied)
      &aux i (j (push (list a b c d e e-supplied f g h h-supplied i) *state*)))
-  (values a b c d e e-supplied f g h h-supplied i j))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied i j *state*))
 
 (defun required-rest
     (a b
      &rest rest)
-  (values a b rest))
+  (push :body *state*)
+  (values a b rest *state*))
 
 (defun required-rest-aux
     (a b
      &rest rest
      &aux c (d (push (list a b rest c) *state*)))
-  (values a b rest c d))
+  (push :body *state*)
+  (values a b rest c d *state*))
 
 (defun required-rest-key
     (a b
@@ -146,7 +163,8 @@
      &key c (d (push :d-default *state*)) (e (push :e-default *state*) e-supplied)
        ((:z f)) ((:y g) (push :g-default *state*))
        ((:x h) (push :h-default *state*) h-supplied))
-  (values a b c d e e-supplied f g h h-supplied rest))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied rest *state*))
 
 (defun required-rest-key-aux
     (a b
@@ -155,27 +173,32 @@
        ((:z f)) ((:y g) (push :g-default *state*))
        ((:x h) (push :h-default *state*) h-supplied)
      &aux i (j (push (list a b c d e e-supplied f g h h-supplied rest i) *state*)))
-  (values a b c d e e-supplied f g h h-supplied rest i j))
+  (push :body *state*)
+  (values a b c d e e-supplied f g h h-supplied rest i j *state*))
 
 (defun optional
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied))
-  (values a b c c-supplied))
+  (push :body *state*)
+  (values a b c c-supplied *state*))
 
 (defun optional-aux
     (&optional a (b :b-default) (c :c-default c-supplied)
      &aux d (e (push (list a b c d) *state*)))
-  (values a b c c-supplied d e))
+  (push :body *state*)
+  (values a b c c-supplied d e *state*))
 
 (defun optional-rest
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
      &rest rest)
-  (values a b c c-supplied rest))
+  (push :body *state*)
+  (values a b c c-supplied rest *state*))
 
 (defun optional-rest-aux
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
      &rest rest
      &aux d (e (push (list a b c d rest) *state*)))
-  (values a b c c-supplied rest d e))
+  (push :body *state*)
+  (values a b c c-supplied rest d e *state*))
 
 (defun optional-rest-key
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
@@ -183,7 +206,8 @@
      &key d (e (push :e-default *state*)) (f (push :f-default *state*) f-supplied)
        ((:z g)) ((:y h) (push :h-default *state*))
        ((:x i) (push :i-default *state*) i-supplied))
-  (values a b c c-supplied d e f f-supplied g h i i-supplied rest))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied g h i i-supplied rest *state*))
 
 (defun optional-rest-key-aux
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
@@ -193,14 +217,16 @@
        ((:x i) (push :i-default *state*) i-supplied)
      &aux j (k (push (list a b c c-supplied d e f
                            f-supplied g h i i-supplied rest j) *state*)))
-  (values a b c c-supplied d e f f-supplied g h i i-supplied rest j k))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied g h i i-supplied rest j k *state*))
 
 (defun optional-key
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
      &key d (e (push :e-default *state*)) (f (push :f-default *state*) f-supplied)
        ((:z g)) ((:y h) (push :h-default *state*))
        ((:x i) (push :i-default *state*) i-supplied))
-  (values a b c c-supplied d e f f-supplied g h i i-supplied))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied g h i i-supplied *state*))
 
 (defun optional-key-aux
     (&optional a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
@@ -209,36 +235,42 @@
        ((:x i) (push :i-default *state*) i-supplied)
      &aux j (k (push (list a b c c-supplied d e f
                            f-supplied g h i i-supplied j) *state*)))
-  (values a b c c-supplied d e f f-supplied g h i i-supplied j k))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied g h i i-supplied j k *state*))
 
 (defun key
     (&key a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
        ((:z d)) ((:y e) (push :e-default *state*))
        ((:x f) (push :f-default *state*) f-supplied))
-  (values a b c c-supplied d e f f-supplied))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied *state*))
 
 (defun key-aux
     (&key a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
        ((:z d)) ((:y e) (push :e-default *state*))
        ((:x f) (push :f-default *state*) f-supplied)
      &aux g (h (push (list a b c c-supplied d e f f-supplied g) *state*)))
-  (values a b c c-supplied d e f f-supplied g h))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied g h *state*))
 
 (defun rest_
     (&rest rest)
-  (values rest))
+  (push :body *state*)
+  (values rest *state*))
 
 (defun rest-aux
     (&rest rest
      &aux a (b (push (list rest a) *state*)))
-  (values rest a b))
+  (push :body *state*)
+  (values rest a b *state*))
 
 (defun rest-key
     (&rest rest
      &key a (b (push :b-default *state*)) (c (push :c-default *state*) c-supplied)
        ((:z d)) ((:y e) (push :e-default *state*))
        ((:x f) (push :f-default *state*) f-supplied))
-  (values a b c c-supplied d e f f-supplied rest))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied rest *state*))
 
 (defun rest-key-aux
     (&rest rest
@@ -246,4 +278,5 @@
        ((:z d)) ((:y e) (push :e-default *state*))
        ((:x f) (push :f-default *state*) f-supplied)
      &aux g (h (push (list a b c c-supplied d e f f-supplied rest g) *state*)))
-  (values a b c c-supplied d e f f-supplied rest g h))
+  (push :body *state*)
+  (values a b c c-supplied d e f f-supplied rest g h *state*))
