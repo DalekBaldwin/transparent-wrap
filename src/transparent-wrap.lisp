@@ -1,5 +1,7 @@
 (in-package :transparent-wrap)
 
+(defparameter *allow-init-forms* nil)
+
 (defun organize-arguments (arglist)
   (let ((directives (list '&optional '&rest '&key '&allow-other-keys '&aux))
         (collecting-directives (list :required '&optional '&rest '&key '&aux))
@@ -54,11 +56,24 @@
        (&rest args)
      (,wrapper (apply (symbol-function ',function) args))))
 
+(defun real-keyword (key-param)
+  (with-slots (name keyword-name) key-param
+    (if keyword-name
+        keyword-name
+        (intern (symbol-name name) :keyword))))
+
 (defun create-body (function required optional rest key)
   (let* ((&required required)
          (&optional optional)
          (&rest rest)
          (&key key)
+         (init-formable-keys
+          (when *allow-init-forms*
+            (loop for key in &key
+               unless (symbol-package (key-param-supplied-p-parameter key))
+               collect key)))
+         (non-init-formable-keys
+          (set-difference &key init-formable-keys))
          (non-optional-portion
           (cond
             (&rest
@@ -70,19 +85,23 @@
              `(apply (symbol-function ',function)
                      ,@(mapcar #'required-param-name &required)
                      ,@(mapcar #'optional-param-name &optional)
-                     (let ((actual-keys))
+                     (let ((actual-keys
+                            (list ,@(loop for key in init-formable-keys
+                                       collect (real-keyword key)
+                                       collect (key-param-name key)))))
                        (loop
                           for supplied in
-                            (list ,@(mapcar #'key-param-supplied-p-parameter &key))
+                            (list ,@(mapcar
+                                     #'key-param-supplied-p-parameter
+                                     non-init-formable-keys))
                           for arg in
-                            (list ,@(mapcar #'key-param-name &key))
+                            (list ,@(mapcar
+                                     #'key-param-name
+                                     non-init-formable-keys))
                           for key in
-                            (list ,@(loop for key in &key
-                                       collect
-                                         (with-slots (name keyword-name) key
-                                           (if keyword-name
-                                               keyword-name
-                                               (intern (symbol-name name) :keyword)))))
+                            (list
+                             ,@(loop for key in non-init-formable-keys
+                                  collect (real-keyword key)))
                           when supplied
                           do
                             (push arg actual-keys)
@@ -137,17 +156,30 @@
              ;; CCL returns keyword symbol and no other info
              #+ccl (setf name
                          (intern (symbol-name name) wrapping-package))
-             (setf init-form nil)
-             (unless supplied-p-parameter
-               (setf supplied-p-parameter
-                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))))
+             (if supplied-p-parameter
+                 (setf init-form nil)
+                 (setf supplied-p-parameter
+                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+             (unless *allow-init-forms*
+               (setf init-form nil))))
+      
+      ;; todo: actual logic for safe init-forms...
       (loop for optional in &optional
+         with no-supply-checks-yet t
          do
            (with-slots (name init-form supplied-p-parameter) optional
-             (setf init-form nil)
-             (unless supplied-p-parameter
-               (setf supplied-p-parameter
-                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))))
+             (cond
+               (supplied-p-parameter
+                (setf init-form nil
+                      no-supply-checks-yet nil))
+               (no-supply-checks-yet
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+               (t
+                (setf init-form nil)
+                (setf
+                 supplied-p-parameter
+                 (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
       (when (and (null &rest)
                  (or force-rest
                      ;; MUST pass possibly unknown args through
@@ -160,9 +192,11 @@
                     `(&optional
                       ,@(loop for optional in &optional
                            collect
-                             `(,(optional-param-name optional)
-                                ,(optional-param-init-form optional)
-                                ,(optional-param-supplied-p-parameter optional)))))
+                             (with-slots (name init-form supplied-p-parameter)
+                                 optional
+                               `(,name
+                                 ,init-form
+                                 ,supplied-p-parameter)))))
             ,@(when &rest `(&rest ,@(mapcar #'rest-param-name &rest)))
             ,@(when &key
                     `(&key

@@ -77,6 +77,9 @@
       :name name
       :init-form init-form))))
 
+(defun match-lambda-list (params)
+  (match-requireds params))
+
 (defun match-requireds (params)
   (match params
     (`(&optional ,@x)
@@ -91,9 +94,6 @@
       (list* (make-required-param :name x) (match-requireds y)))
     (nil
      nil)))
-
-(defun match-lambda-list (params)
-  (match-requireds params))
 
 (defun match-optionals (params)
   (match params

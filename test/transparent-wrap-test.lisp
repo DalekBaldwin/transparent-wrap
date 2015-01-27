@@ -5,17 +5,28 @@
 (defsuite* test-all)
 
 (defmacro do-test (function-name &rest args)
-  `(is
-    (equal
-     (let ((transparent-wrap-test.original::*state* nil))
+  `(progn
+     (is
+      (equal
+       (let ((transparent-wrap-test.original::*state* nil))
+         (multiple-value-list (,(find-symbol
+                                 (symbol-name function-name)
+                                 :transparent-wrap-test.original)
+                                ,@args)))
+       (let ((transparent-wrap-test.original::*state* nil))
+         (multiple-value-list (,(find-symbol
+                                 (symbol-name function-name)
+                                 :transparent-wrap-test.wrapping)
+                                ,@args)))))
+     (is
+      (equal
        (multiple-value-list (,(find-symbol
                                (symbol-name function-name)
-                               :transparent-wrap-test.original)
-                              ,@args)))
-     (let ((transparent-wrap-test.original::*state* nil))
+                               :transparent-wrap-test.functional)
+                              ,@args))
        (multiple-value-list (,(find-symbol
                                (symbol-name function-name)
-                               :transparent-wrap-test.wrapping)
+                               :transparent-wrap-test.functional-wrap)
                               ,@args))))))
 
 (deftest test-no-params ()

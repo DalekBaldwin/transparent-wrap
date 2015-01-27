@@ -37,6 +37,7 @@
   ((:module :test
             :components ((:file "package")
                          (:file "original")
+                         (:file "functional")
                          (:file "wrapping")
                          (:file "transparent-wrap-test"))
             :serial t))

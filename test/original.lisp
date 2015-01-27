@@ -329,8 +329,9 @@
                                       ,@(when (member 'b supplieds)
                                               `(b-supplied)))
                                      (c
-                                      ,(when (member 'c init-forms)
-                                             `(push :c-init *state*))
+                                      ,(if (member 'c init-forms)
+                                           `(push :c-init *state*)
+                                           nil)
                                       ,@(when (member 'c supplieds)
                                               `(c-supplied))))
                                 (values a ,@(when (member 'a supplieds)
