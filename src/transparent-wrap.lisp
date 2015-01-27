@@ -86,6 +86,9 @@
              `(apply (symbol-function ',function)
                      ,@(mapcar #'required-param-name &required)
                      ,@(mapcar #'optional-param-name &optional)
+                     ,@(loop for key in init-formable-keys
+                            collect (real-keyword key)
+                            collect (key-param-name key))
                      ,@(mapcar #'rest-param-name &rest)))
             (&key
              `(apply (symbol-function ',function)
@@ -171,7 +174,8 @@
            ;; init-forms further down the line may depend on that variable, so
            ;; we can't hoist any of their init-forms either
            (init-forms-still-okay t)
-           (init-forms-okay-seq nil))
+           (init-forms-okay-seq nil)
+           (init-forms-okay-after-optionals nil))
       (loop for optional in &optional
          do
            (with-slots (name init-form supplied-p-parameter) optional
@@ -184,7 +188,7 @@
                (supplied-p-parameter
                 (setf init-form nil
                       init-forms-still-okay nil))
-               ((or init-forms-still-okay *allow-init-forms*)
+               (init-forms-still-okay
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
                 (push optional init-forms-okay-seq))
@@ -193,6 +197,12 @@
                 (setf
                  supplied-p-parameter
                  (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
+      (setf init-forms-okay-after-optionals init-forms-still-okay)
+      (when (and (null &rest)
+                 (or *force-rest*
+                     ;; MUST pass possibly unknown args through
+                     &allow-other-keys))
+        (setf &rest (list (make-rest-param :name (gensym "REST")))))
       (loop for key in &key
          do
            (with-slots (name init-form supplied-p-parameter) key
@@ -207,7 +217,12 @@
                (supplied-p-parameter
                 (setf init-form nil
                       init-forms-still-okay nil))
-               ((or init-forms-still-okay *allow-init-forms*)
+               (&rest
+                (setf init-form nil)
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+               ((or init-forms-still-okay
+                    (and init-forms-okay-after-optionals *allow-init-forms*))
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
                 (push key init-forms-okay-seq))
@@ -216,11 +231,7 @@
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
       (setf init-forms-okay-seq (nreverse init-forms-okay-seq))
-      (when (and (null &rest)
-                 (or *force-rest*
-                     ;; MUST pass possibly unknown args through
-                     &allow-other-keys))
-        (setf &rest (list (make-rest-param :name (gensym "REST")))))
+
       `(defun ,(or alt-name
                    (intern (princ-to-string function) wrapping-package))
            (,@(mapcar #'required-param-name &required)
