@@ -62,19 +62,23 @@
         keyword-name
         (intern (symbol-name name) :keyword))))
 
-(defun create-body (function required optional rest key)
+(defun create-body (function required optional rest key init-forms-okay-seq)
   (let* ((&required required)
          (&optional optional)
          (&rest rest)
          (&key key)
          (init-formable-keys
-          #-ccl ;; CCL does not give init-form info
-          (when *allow-init-forms*
-            (loop for key in &key
-               unless (symbol-package (key-param-supplied-p-parameter key))
-               collect key)))
+          (loop for key in &key
+             when (member key init-forms-okay-seq)
+             collect key))
          (non-init-formable-keys
           (set-difference &key init-formable-keys))
+         (init-formable-optionals
+          (loop for optional in &optional
+             when (member optional init-forms-okay-seq)
+             collect optional))
+         (non-init-formable-optionals
+          (set-difference &optional init-formable-optionals))
          (non-optional-portion
           (cond
             (&rest
@@ -111,12 +115,12 @@
             (t `(,function
                  ,@(mapcar #'required-param-name &required)
                  ,@(mapcar #'optional-param-name &optional))))))
-    (if (null &optional)
+    (if (null non-init-formable-optionals)
         non-optional-portion
         `(case (count-until-false
-                (list ,@(loop for optional in &optional
+                (list ,@(loop for optional in non-init-formable-optionals
                            collect (optional-param-supplied-p-parameter optional))))
-           ,@(loop for optional in &optional
+           ,@(loop for optional in non-init-formable-optionals
                 counting optional into i
                 collect
                   `(,(1- i)
@@ -124,7 +128,10 @@
                       ,@(mapcar #'required-param-name required)
                       ,@(mapcar
                          #'optional-param-name
-                         (subseq &optional 0 (1- i)))))
+                         init-formable-optionals)
+                      ,@(mapcar
+                         #'optional-param-name
+                         (subseq non-init-formable-optionals 0 (1- i)))))
                 into cases
                 finally
                   (return
@@ -149,38 +156,65 @@
            (&optional (remove-if-not #'optional-param-p parsed))
            (&rest (remove-if-not #'rest-param-p parsed))
            (&key (remove-if-not #'key-param-p parsed))
-           (&allow-other-keys (find '&allow-other-keys parsed)))
-      (loop for key in &key
-         do
-           (with-slots (name init-form supplied-p-parameter)
-               key
-             ;; CCL returns keyword symbol and no other info
-             #+ccl (setf name
-                         (intern (symbol-name name) wrapping-package))
-             (if supplied-p-parameter
-                 (setf init-form nil)
-                 (setf supplied-p-parameter
-                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
-             (unless *allow-init-forms*
-               (setf init-form nil))))
-      
-      ;; todo: actual logic for safe init-forms...
+           (&allow-other-keys (find '&allow-other-keys parsed))
+           ;; don't use &aux -- luckily it doesn't show up in the reflective
+           ;; function signature and its init-forms are the last to be
+           ;; evaluated, so we don't lose anything by letting the wrapped
+           ;; function handle them completely
+           ;; ******************************************************************
+           ;; init-forms are guaranteed to be evaluated in left-to-right order,
+           ;; so we can safely hoist them into the wrapper only up to the first
+           ;; parameter that contains a supply check - hoisting that parameter's
+           ;; init-form would cause the wrapped function to see its supplied-p
+           ;; as t when it really should be nil, so we can't do that, and
+           ;; init-forms further down the line may depend on that variable, so
+           ;; we can't hoist any of their init-forms either
+           (init-forms-still-okay t)
+           (init-forms-okay-seq nil))
       (loop for optional in &optional
-         with no-supply-checks-yet t
          do
            (with-slots (name init-form supplied-p-parameter) optional
+             (declare (ignorable init-form))
+             #+ccl ;; CCL returns optional parameter name and no other info
+             (setf supplied-p-parameter
+                   (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+             #-ccl
              (cond
                (supplied-p-parameter
                 (setf init-form nil
-                      no-supply-checks-yet nil))
-               (no-supply-checks-yet
+                      init-forms-still-okay nil))
+               ((or init-forms-still-okay *allow-init-forms*)
                 (setf supplied-p-parameter
-                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+                (push optional init-forms-okay-seq))
                (t
                 (setf init-form nil)
                 (setf
                  supplied-p-parameter
                  (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
+      (loop for key in &key
+         do
+           (with-slots (name init-form supplied-p-parameter) key
+             (declare (ignorable init-form))
+             #+ccl ;; CCL returns keyword symbol and no other info
+             (setf name
+                     (intern (symbol-name name) wrapping-package)
+                   supplied-p-parameter
+                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+             #-ccl
+             (cond
+               (supplied-p-parameter
+                (setf init-form nil
+                      init-forms-still-okay nil))
+               ((or init-forms-still-okay *allow-init-forms*)
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+                (push key init-forms-okay-seq))
+               (t
+                (setf init-form nil)
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
+      (setf init-forms-okay-seq (nreverse init-forms-okay-seq))
       (when (and (null &rest)
                  (or force-rest
                      ;; MUST pass possibly unknown args through
@@ -218,23 +252,28 @@
                   `(declare (ignore ,@(mapcar #'key-param-name &key)))))
          ,(funcall
            body-maker
-           function &required &optional &rest &key)))))
+           function &required &optional &rest &key init-forms-okay-seq)))))
 
 (defun create-transparent-defun (function wrapper wrapping-package
                                  &key force-rest alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :force-rest force-rest :alt-name alt-name
-   :body-maker (lambda (function required optional rest key)
-     (funcall wrapper (create-body function required optional rest key)))))
+   :body-maker
+   (lambda (function required optional rest key init-forms-okay-seq)
+     (funcall
+      wrapper
+      (create-body function required optional rest key init-forms-okay-seq)))))
 
 (defmacro transparent-defun (function wrapper wrapping-package
                              &key force-rest alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :force-rest force-rest :alt-name alt-name
-   :body-maker (lambda (function required optional rest key)
-     `(,wrapper ,(create-body function required optional rest key)))))
+   :body-maker
+   (lambda (function required optional rest key init-forms-okay-seq)
+     `(,wrapper
+       ,(create-body function required optional rest key init-forms-okay-seq)))))
 
 
 
