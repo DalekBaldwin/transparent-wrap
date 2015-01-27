@@ -7,14 +7,16 @@
 (defmacro do-test (function-name &rest args)
   `(is
     (equal
-     (multiple-value-list (,(find-symbol
-                             (symbol-name function-name)
-                             :transparent-wrap-test.original)
-                            ,@args))
-     (multiple-value-list (,(find-symbol
-                             (symbol-name function-name)
-                             :transparent-wrap-test.wrapping)
-                            ,@args)))))
+     (let ((transparent-wrap-test.original::*state* nil))
+       (multiple-value-list (,(find-symbol
+                               (symbol-name function-name)
+                               :transparent-wrap-test.original)
+                              ,@args)))
+     (let ((transparent-wrap-test.original::*state* nil))
+       (multiple-value-list (,(find-symbol
+                               (symbol-name function-name)
+                               :transparent-wrap-test.wrapping)
+                              ,@args))))))
 
 (deftest test-no-params ()
   (do-test :no-params))
