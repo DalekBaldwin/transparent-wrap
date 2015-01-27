@@ -54,44 +54,43 @@
        (&rest args)
      (,wrapper (apply (symbol-function ',function) args))))
 
-(defun create-body (function required optional rest key
-                    &aux
-                      (&required required)
-                      (&optional optional)
-                         (&rest rest)
-                            (&key key))
-  (let ((non-optional-portion
-         (cond
-           (&rest
-            `(apply (symbol-function ',function)
-                    ,@(mapcar #'required-param-name &required)
-                    ,@(mapcar #'optional-param-name &optional)
-                    ,@(mapcar #'rest-param-name &rest)))
-           (&key
-            `(apply (symbol-function ',function)
-                    ,@(mapcar #'required-param-name &required)
-                    ,@(mapcar #'optional-param-name &optional)
-                    (let ((actual-keys))
-                      (loop
-                         for supplied in
-                           (list ,@(mapcar #'key-param-supplied-p-parameter &key))
-                         for arg in
-                           (list ,@(mapcar #'key-param-name &key))
-                         for key in
-                           (list ,@(loop for key in &key
-                                      collect
-                                        (with-slots (name keyword-name) key
-                                          (if keyword-name
-                                              keyword-name
-                                              (intern (symbol-name name) :keyword)))))
-                         when supplied
-                         do
-                           (push arg actual-keys)
-                           (push key actual-keys))
-                      actual-keys)))
-           (t `(,function
-                ,@(mapcar #'required-param-name &required)
-                ,@(mapcar #'optional-param-name &optional))))))
+(defun create-body (function required optional rest key)
+  (let* ((&required required)
+         (&optional optional)
+         (&rest rest)
+         (&key key)
+         (non-optional-portion
+          (cond
+            (&rest
+             `(apply (symbol-function ',function)
+                     ,@(mapcar #'required-param-name &required)
+                     ,@(mapcar #'optional-param-name &optional)
+                     ,@(mapcar #'rest-param-name &rest)))
+            (&key
+             `(apply (symbol-function ',function)
+                     ,@(mapcar #'required-param-name &required)
+                     ,@(mapcar #'optional-param-name &optional)
+                     (let ((actual-keys))
+                       (loop
+                          for supplied in
+                            (list ,@(mapcar #'key-param-supplied-p-parameter &key))
+                          for arg in
+                            (list ,@(mapcar #'key-param-name &key))
+                          for key in
+                            (list ,@(loop for key in &key
+                                       collect
+                                         (with-slots (name keyword-name) key
+                                           (if keyword-name
+                                               keyword-name
+                                               (intern (symbol-name name) :keyword)))))
+                          when supplied
+                          do
+                            (push arg actual-keys)
+                            (push key actual-keys))
+                       actual-keys)))
+            (t `(,function
+                 ,@(mapcar #'required-param-name &required)
+                 ,@(mapcar #'optional-param-name &optional))))))
     (if (null &optional)
         non-optional-portion
         `(case (count-until-false
