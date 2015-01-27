@@ -159,7 +159,10 @@
            (&required (remove-if-not #'required-param-p parsed))
            (&optional (remove-if-not #'optional-param-p parsed))
            (&rest (remove-if-not #'rest-param-p parsed))
-           (&key (remove-if-not #'key-param-p parsed))
+           (&key
+            (remove-duplicates ;; handle methods that override parent
+             (remove-if-not #'key-param-p parsed)
+             :key #'key-param-name))
            (&allow-other-keys (find '&allow-other-keys parsed))
            ;; don't use &aux -- luckily it doesn't show up in the reflective
            ;; function signature and its init-forms are the last to be
