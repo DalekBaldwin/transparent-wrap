@@ -260,7 +260,7 @@
 #.
 `(progn
    ,@(let ((combinations)
-           (arguments '(a b c d)))
+           (arguments '(a b)))
           (loop for i from 0 to (length arguments)
              do (alexandria:map-combinations
                  (lambda (init-forms)
@@ -293,27 +293,11 @@
                                            :b-init
                                            nil)
                                       ,@(when (member 'b supplieds)
-                                              `(b-supplied)))
-                                     (c
-                                      ,(if (member 'c init-forms)
-                                           :c-init
-                                           nil)
-                                      ,@(when (member 'c supplieds)
-                                              `(c-supplied)))
-                                     (d
-                                      ,(if (member 'd init-forms)
-                                           :d-init
-                                           nil)
-                                      ,@(when (member 'd supplieds)
-                                              `(d-supplied))))
+                                              `(b-supplied))))
                                 (values a ,@(when (member 'a supplieds)
                                                   `(a-supplied))
                                         b ,@(when (member 'b supplieds)
-                                                  `(b-supplied))
-                                        c ,@(when (member 'c supplieds)
-                                                  `(c-supplied))
-                                        d ,@(when (member 'd supplieds)
-                                                  `(d-supplied))))
+                                                  `(b-supplied))))
                              combinations))
                           arguments :length j)))
                  arguments :length i))

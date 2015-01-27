@@ -356,5 +356,4 @@
                ()
              (do-test ,sym)
              (do-test ,sym 1)
-             (do-test ,sym 1 2)
-             (do-test ,sym 1 2 3))))
+             (do-test ,sym 1 2))))
