@@ -346,11 +346,15 @@
   (do-test :alternating-optional-supplied 1 2 3))
 
 #.
-`(deftest test-optional-combinations ()
-  ,@(loop for sym being the symbols of :transparent-wrap-test.wrapping
-         when (starts-with-subseq "OPTIONAL-MATRIX" (symbol-name sym))
-         appending
-         `((do-test ,sym)
-           (do-test ,sym 1)
-           (do-test ,sym 1 2)
-           (do-test ,sym 1 2 3))))
+`(progn
+   ,@(loop for sym being the symbols of :transparent-wrap-test.wrapping
+        when (starts-with-subseq "OPTIONAL-MATRIX" (symbol-name sym))
+          collect
+          `(deftest ,(intern
+                      (concatenate 'string "TEST-" (symbol-name sym))
+                      :transparent-wrap-test)
+               ()
+             (do-test ,sym)
+             (do-test ,sym 1)
+             (do-test ,sym 1 2)
+             (do-test ,sym 1 2 3))))
