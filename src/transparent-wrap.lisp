@@ -272,7 +272,11 @@
            function &required &optional &rest &key init-forms-okay-seq)))))
 
 (defun create-transparent-defun (function wrapper wrapping-package
-                                 &key ((:force-rest *force-rest*) *force-rest*) alt-name)
+                                 &key
+                                   ((:force-rest *force-rest*) *force-rest*)
+                                   ((:allow-init-forms *allow-init-forms*)
+                                    *allow-init-forms*)
+                                   alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :alt-name alt-name
@@ -283,7 +287,11 @@
       (create-body function required optional rest key init-forms-okay-seq)))))
 
 (defmacro transparent-defun (function wrapper wrapping-package
-                             &key ((:force-rest *force-rest*) *force-rest*) alt-name)
+                             &key
+                               ((:force-rest *force-rest*) *force-rest*)
+                               ((:allow-init-forms *allow-init-forms*)
+                                *allow-init-forms*)
+                               alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :alt-name alt-name
