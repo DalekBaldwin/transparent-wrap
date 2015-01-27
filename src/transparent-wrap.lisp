@@ -68,6 +68,7 @@
          (&rest rest)
          (&key key)
          (init-formable-keys
+          #-ccl ;; CCL does not give init-form info
           (when *allow-init-forms*
             (loop for key in &key
                unless (symbol-package (key-param-supplied-p-parameter key))
