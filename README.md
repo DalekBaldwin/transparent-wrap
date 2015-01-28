@@ -1,4 +1,4 @@
-Transparent-wrap
+transparent-wrap
 ================
 
 [![Build Status](https://travis-ci.org/DalekBaldwin/transparent-wrap.svg?branch=master)](https://travis-ci.org/DalekBaldwin/transparent-wrap)
@@ -37,7 +37,7 @@ and fix it without having to massively edit the package's source code or your cl
 Performance
 -----------
 
-For some argument lists, the wrapping layer imposes a considerable overhead, since we have to manually ensure that we only pass exactly the same optional and keyword arguments that appeared in the outer call in case the wrapped function explicitly checks whether any of those arguments were supplied. Transparent-wrap offers two ways to mitigate this overhead:
+For some argument lists, the wrapping layer imposes a considerable overhead, since we have to manually ensure that we only pass exactly the same optional and keyword arguments that appeared in the outer call in case the wrapped function explicitly checks whether any of those arguments were supplied. There are two ways to mitigate this overhead:
 
 1. Set the keyword argument `:force-rest` to `t` in `create-transparent-defun`. This adds a `&rest` parameter when wrapping a function that has `&key` arguments but no `&rest` argument. This way, the keyword arguments can be passed through with `apply` without checking which ones are present, with minimal clutter added to the function signature.
 
