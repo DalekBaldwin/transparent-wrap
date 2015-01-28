@@ -32,7 +32,7 @@ When using `lispbuilder-sdl` on SBCL, you may encounter all kinds of floating po
              :sdl-wrap)))
 ```
 
-and fix it without having to massively edit the package's source code or your client code. Just import the wrapper package instead.
+and fix it without having to massively edit the package's source code or your client code. Just import the wrapper package instead. Now you can get the functionality you need and see that `sdl-wrap:draw-string-solid-*` has the signature `(string x y &key (justify :left) (surface lispbuilder-sdl:*default-surface*) (font lispbuilder-sdl:*default-font*) (color lispbuilder-sdl:*default-color*))` without manually searching for it!
 
 Performance
 -----------
