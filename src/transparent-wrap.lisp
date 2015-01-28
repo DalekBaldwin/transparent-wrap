@@ -182,7 +182,11 @@
            ;; we can't hoist any of their init-forms either
            (init-forms-still-okay t)
            (init-forms-okay-seq nil)
-           (init-forms-okay-after-optionals nil))
+           (init-forms-okay-after-optionals nil)
+           (generic-function-congruence-issues
+            (and (subtypep (type-of (symbol-function function))
+                           'generic-function)
+                 (or &rest &key))))
       (loop for optional in &optional
          do
            (with-slots (name init-form supplied-p-parameter) optional
@@ -195,6 +199,11 @@
                (supplied-p-parameter
                 (setf init-form nil
                       init-forms-still-okay nil))
+               (generic-function-congruence-issues
+                (setf init-form nil)
+                (setf
+                 supplied-p-parameter
+                 (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
                (init-forms-still-okay
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
@@ -208,9 +217,7 @@
 
       ;; todo: generate decent signature based on analyzing lambda list
       ;; congruence for generic functions? probably a lot of work...
-      (when (and (subtypep (type-of (symbol-function function))
-                           'generic-function)
-                 (or &rest &key))
+      (when generic-function-congruence-issues
         (setf &rest (or &rest (list (make-rest-param :name (gensym "REST"))))
               &key nil
               &allow-other-keys nil))
