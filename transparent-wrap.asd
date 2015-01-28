@@ -19,9 +19,16 @@
   ((:static-file "transparent-wrap.asd")
    (:module :src
             :components ((:file "package")
+                         (:file "match")
                          (:file "transparent-wrap"))
             :serial t))
-  :depends-on (:trivial-arguments))
+  :depends-on (:trivial-arguments
+               :named-readtables
+               :optima
+               :fare-quasiquote-extras)
+  :in-order-to ((test-op (load-op :transparent-wrap-test)))
+  :perform (test-op :after (op c)
+                    (funcall (intern "TEST-ALL" :transparent-wrap-test))))
 
 (defsystem :transparent-wrap-test
   :name "transparent-wrap-test"
@@ -29,7 +36,8 @@
   :components
   ((:module :test
             :components ((:file "package")
-                         (:file "original")
+                         (:file "stateful")
+                         (:file "functional")
                          (:file "wrapping")
                          (:file "transparent-wrap-test"))
             :serial t))

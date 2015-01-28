@@ -1,7 +1,7 @@
 (in-package :cl-user)
 
 (defpackage :transparent-wrap
-  (:use :cl)
+  (:use :cl :optima)
   (:export
    #:create-opaque-defun
    #:opaque-defun

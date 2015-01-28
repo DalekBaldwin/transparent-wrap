@@ -5,16 +5,29 @@
 (defsuite* test-all)
 
 (defmacro do-test (function-name &rest args)
-  `(is
-    (equal
-     (multiple-value-list (,(find-symbol
-                             (symbol-name function-name)
-                             :transparent-wrap-test.original)
-                            ,@args))
-     (multiple-value-list (,(find-symbol
-                             (symbol-name function-name)
-                             :transparent-wrap-test.wrapping)
-                            ,@args)))))
+  `(progn
+     (is
+      (equal
+       (let ((transparent-wrap-test.stateful::*state* nil))
+         (multiple-value-list (,(find-symbol
+                                 (symbol-name function-name)
+                                 :transparent-wrap-test.stateful)
+                                ,@args)))
+       (let ((transparent-wrap-test.stateful::*state* nil))
+         (multiple-value-list (,(find-symbol
+                                 (symbol-name function-name)
+                                 :transparent-wrap-test.stateful-wrap)
+                                ,@args)))))
+     (is
+      (equal
+       (multiple-value-list (,(find-symbol
+                               (symbol-name function-name)
+                               :transparent-wrap-test.functional)
+                              ,@args))
+       (multiple-value-list (,(find-symbol
+                               (symbol-name function-name)
+                               :transparent-wrap-test.functional-wrap)
+                              ,@args))))))
 
 (deftest test-no-params ()
   (do-test :no-params))
@@ -325,3 +338,22 @@
                      arguments :length i))
             (reverse (mapcar #'flatten combinations)))
           collect `(do-test :rest-key-aux ,@combination)))
+
+(deftest test-alternating-optional-supplied ()
+  (do-test :alternating-optional-supplied)
+  (do-test :alternating-optional-supplied 1)
+  (do-test :alternating-optional-supplied 1 2)
+  (do-test :alternating-optional-supplied 1 2 3))
+
+#.
+`(progn
+   ,@(loop for sym being the symbols of :transparent-wrap-test.stateful
+        when (starts-with-subseq "OPTIONAL-MATRIX" (symbol-name sym))
+          collect
+          `(deftest ,(intern
+                      (concatenate 'string "TEST-" (symbol-name sym))
+                      :transparent-wrap-test)
+               ()
+             (do-test ,sym)
+             (do-test ,sym 1)
+             (do-test ,sym 1 2))))

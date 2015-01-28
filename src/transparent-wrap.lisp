@@ -1,5 +1,8 @@
 (in-package :transparent-wrap)
 
+(defparameter *allow-init-forms* nil)
+(defparameter *force-rest* nil)
+
 (defun organize-arguments (arglist)
   (let ((directives (list '&optional '&rest '&key '&allow-other-keys '&aux))
         (collecting-directives (list :required '&optional '&rest '&key '&aux))
@@ -18,41 +21,11 @@
                        (reverse (gethash directive collected-args)))
                      collecting-directives))))
 
-(defun create-keyword-params (key)
-  (remove-duplicates
-   (loop for k in key
-      collect
-        (if (atom k) k (first k)))
-   :test (lambda (x y) (eql (or (and (atom x) x)
-                                (first x))
-                            (or (and (atom y) y)
-                                (first y))))))
-
 (defun create-optional-params (optional)
   (remove-duplicates
    (loop for o in optional
       collect
         (if (atom o) o (first o)))))
-
-(defun create-keyword-args (key)
-  (apply #'append
-         (remove-duplicates
-          (loop for k in key
-             collect
-               (cond
-                 ((atom k)
-                  (list
-                   (intern (symbol-name k) :keyword)
-                   k))
-                 ((atom (first k))
-                  (list
-                   (intern (symbol-name (first k)) :keyword)
-                   (first k)))
-                 ((listp (first k))
-                  (list
-                   (first (first k))
-                   (second (first k))))))
-          :test (lambda (x y) (eql (first x) (first y))))))
 
 (defun count-until-false (list)
   (or
@@ -84,61 +57,89 @@
        (&rest args)
      (,wrapper (apply (symbol-function ',function) args))))
 
-(defun create-body (function required optional->supplied rest key->supplied)
-  (let ((non-optional-portion
-         (cond
-           (rest
-            `(apply (symbol-function ',function)
-                    ,@required
-                    ,@(mapcar #'car optional->supplied)
-                    ,@rest))
-           (key->supplied
-            `(apply (symbol-function ',function)
-                    ,@required
-                    ,@(mapcar #'car optional->supplied)
-                    (let ((actual-keys))
-                      (loop
-                         for supplied in
-                           (list ,@(loop for key in key->supplied
-                                      collect (cdr key)))
-                         for arg in
-                           (list ,@(loop for key in key->supplied
-                                      collect
-                                        (let ((thing (car key)))
-                                          (if (atom thing)
-                                              thing
-                                              (second thing)))))
-                         for key in
-                           (list ,@(loop for key in key->supplied
-                                      collect
-                                        (let ((thing (car key)))
-                                          (if (atom thing)
-                                              (intern
-                                               (symbol-name thing)
-                                               :keyword)
-                                              (first thing)))))
-                         when supplied
-                         do
-                           (push arg actual-keys)
-                           (push key actual-keys))
-                      actual-keys)))
-           (t `(,function
-                ,@required
-                ,@(mapcar #'car optional->supplied))))))
-    (if (null optional->supplied)
-        non-optional-portion
+(defun real-keyword (key-param)
+  (with-slots (name keyword-name) key-param
+    (if keyword-name
+        keyword-name
+        (intern (symbol-name name) :keyword))))
+
+(defun create-body (function required optional rest key init-forms-okay-seq)
+  (let* ((&required required)
+         (&optional optional)
+         (&rest rest)
+         (&key key)
+         (init-formable-keys
+          (loop for key in &key
+             when (member key init-forms-okay-seq)
+             collect key))
+         (non-init-formable-keys
+          (loop for key in &key
+               unless (member key init-formable-keys)
+               collect key))
+         (init-formable-optionals
+          (loop for optional in &optional
+             when (member optional init-forms-okay-seq)
+             collect optional))
+         (non-init-formable-optionals
+          (loop for optional in &optional
+               unless (member optional init-formable-optionals)
+               collect optional))
+         (all-optionals-present-cases
+          (cond
+            (&rest
+             `(apply (symbol-function ',function)
+                     ,@(mapcar #'required-param-name &required)
+                     ,@(mapcar #'optional-param-name &optional)
+                     ,@(loop for key in init-formable-keys
+                            collect (real-keyword key)
+                            collect (key-param-name key))
+                     ,@(mapcar #'rest-param-name &rest)))
+            (&key
+             `(apply (symbol-function ',function)
+                     ,@(mapcar #'required-param-name &required)
+                     ,@(mapcar #'optional-param-name &optional)
+                     (let ((actual-keys
+                            (list ,@(loop for key in init-formable-keys
+                                       collect (real-keyword key)
+                                       collect (key-param-name key)))))
+                       (loop
+                          for supplied in
+                            (list ,@(mapcar
+                                     #'key-param-supplied-p-parameter
+                                     non-init-formable-keys))
+                          for arg in
+                            (list ,@(mapcar
+                                     #'key-param-name
+                                     non-init-formable-keys))
+                          for key in
+                            (list
+                             ,@(loop for key in non-init-formable-keys
+                                  collect (real-keyword key)))
+                          when supplied
+                          do
+                            (push arg actual-keys)
+                            (push key actual-keys))
+                       actual-keys)))
+            (t `(,function
+                 ,@(mapcar #'required-param-name &required)
+                 ,@(mapcar #'optional-param-name &optional))))))
+    (if (null non-init-formable-optionals)
+        all-optionals-present-cases
         `(case (count-until-false
-                (list ,@(loop for optional in optional->supplied
-                           collect (cdr optional))))
-           ,@(loop for optional in optional->supplied
+                (list ,@(loop for optional in non-init-formable-optionals
+                           collect (optional-param-supplied-p-parameter optional))))
+           ,@(loop for optional in non-init-formable-optionals
                 counting optional into i
                 collect
                   `(,(1- i)
                      (,function
-                      ,@required
+                      ,@(mapcar #'required-param-name required)
                       ,@(mapcar
-                         #'car
-                         (subseq optional->supplied 0 (1- i)))))
+                         #'optional-param-name
+                         init-formable-optionals)
+                      ,@(mapcar
+                         #'optional-param-name
+                         (subseq non-init-formable-optionals 0 (1- i)))))
                 into cases
                 finally
                   (return
@@ -146,10 +147,10 @@
                      cases
                      (list
                       `(otherwise
-                        ,non-optional-portion)))))))))
+                        ,all-optionals-present-cases)))))))))
 
 (defun create-transparent-defun% (function wrapper wrapping-package
-                                  &key force-rest alt-name body-maker)
+                                  &key alt-name body-maker)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
     
     ;; fall-through: give up on transparency
@@ -157,80 +158,166 @@
       (return-from create-transparent-defun%
         (create-opaque-defun function wrapper wrapping-package
                             :alt-name alt-name)))
-    
-    (multiple-value-bind
-          (required &optional &rest &key &aux)
-        (organize-arguments arglist)
-      (declare (ignore &aux))
-      (when (and force-rest
-                 (null &rest)
-                 (or &key
+
+    (let* ((parsed (match-lambda-list arglist))
+           (&required (remove-if-not #'required-param-p parsed))
+           (&optional (remove-if-not #'optional-param-p parsed))
+           (&rest (remove-if-not #'rest-param-p parsed))
+           (&key
+            (remove-duplicates ;; handle methods that override parent
+             (remove-if-not #'key-param-p parsed)
+             :key #'key-param-name))
+           (&allow-other-keys (find '&allow-other-keys parsed))
+           ;; don't use &aux -- luckily it doesn't show up in the reflective
+           ;; function signature and its init-forms are the last to be
+           ;; evaluated, so we don't lose anything by letting the wrapped
+           ;; function handle them completely
+           ;; ******************************************************************
+           ;; init-forms are guaranteed to be evaluated in left-to-right order,
+           ;; so we can safely hoist them into the wrapper only up to the first
+           ;; parameter that contains a supply check - hoisting that parameter's
+           ;; init-form would cause the wrapped function to see its supplied-p
+           ;; as t when it really should be nil, so we can't do that, and
+           ;; init-forms further down the line may depend on that variable, so
+           ;; we can't hoist any of their init-forms either
+           (init-forms-still-okay t)
+           (init-forms-okay-seq nil)
+           (init-forms-okay-after-optionals nil)
+           (generic-function-congruence-issues
+            (and (subtypep (type-of (symbol-function function))
+                           'generic-function)
+                 (or &rest &key))))
+      (loop for optional in &optional
+         do
+           (with-slots (name init-form supplied-p-parameter) optional
+             (declare (ignorable init-form))
+             #+ccl ;; CCL returns optional parameter name and no other info
+             (setf supplied-p-parameter
+                   (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+             #-ccl
+             (cond
+               (supplied-p-parameter
+                (setf init-form nil
+                      init-forms-still-okay nil))
+               (generic-function-congruence-issues
+                (setf init-form nil)
+                (setf
+                 supplied-p-parameter
+                 (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+               (init-forms-still-okay
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+                (push optional init-forms-okay-seq))
+               (t
+                (setf init-form nil)
+                (setf
+                 supplied-p-parameter
+                 (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
+      (setf init-forms-okay-after-optionals init-forms-still-okay)
+
+      ;; todo: generate decent signature based on analyzing lambda list
+      ;; congruence for generic functions? probably a lot of work...
+      (when generic-function-congruence-issues
+        (setf &rest (or &rest (list (make-rest-param :name (gensym "REST"))))
+              &key nil
+              &allow-other-keys nil))
+      (when (and (null &rest)
+
+                 (or *force-rest*
                      ;; MUST pass possibly unknown args through
-                     (member '&allow-other-keys arglist)))
-        (setf &rest (list (gensym "REST"))))
-      (let ((optional->supplied
-             (loop for optional in (create-optional-params &optional)
-                collect
-                  (cons optional
-                        (gensym (symbol-name optional)))))
-            (key->supplied
-             (loop for key in (create-keyword-params &key)
-                collect
-                  (cons
-                   #-ccl key
-                   #+ccl ;; CCL returns keyword symbol and no other info
-                   (intern (symbol-name key) wrapping-package)
-                   (gensym (symbol-name (if (atom key)
-                                            key
-                                            (second key))))))))
-        `(defun ,(or alt-name
-                     (intern (princ-to-string function) wrapping-package))
-             (,@required
-              ,@(when &optional `(&optional
-                                  ,@(loop for optional in optional->supplied
-                                       collect `(,(car optional)
-                                                  nil
-                                                  ,(cdr optional)))))
-              ,@(when &rest `(&rest ,@&rest))
-              ,@(when &key `(&key ,@(loop for key in key->supplied
-                                       collect
-                                         (if &rest
-                                             (let ((thing (car key)))
-                                               (if (atom thing)
-                                                   thing
-                                                   (list thing)))
-                                             `(,(car key) nil ,(cdr key))))))
-              ,@(when (member '&allow-other-keys arglist)
-                      (if (null &key)
-                          `(&key &allow-other-keys)
-                          `(&allow-other-keys))))
-           ,@(when &rest
-                   (list
-                    `(declare (ignore ,@(loop for key in key->supplied
-                                             collect
-                                             (let ((thing (car key)))
-                                                     (if (atom thing)
-                                                         thing
-                                                         (second thing))))))))
-           ,(funcall
-             body-maker
-             function required optional->supplied &rest key->supplied))))))
+                     &allow-other-keys))
+        (setf &rest (list (make-rest-param :name (gensym "REST")))))
+      (loop for key in &key
+         do
+           (with-slots (name init-form supplied-p-parameter) key
+             (declare (ignorable init-form))
+             #+ccl ;; CCL returns keyword symbol and no other info
+             (setf name
+                     (intern (symbol-name name) wrapping-package)
+                   supplied-p-parameter
+                     (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+             #-ccl
+             (cond
+               (supplied-p-parameter
+                (setf init-form nil
+                      init-forms-still-okay nil))
+               (&rest
+                (setf init-form nil)
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
+               ((or init-forms-still-okay
+                    (and init-forms-okay-after-optionals *allow-init-forms*))
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
+                (push key init-forms-okay-seq))
+               (t
+                (setf init-form nil)
+                (setf supplied-p-parameter
+                      (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
+      (setf init-forms-okay-seq (nreverse init-forms-okay-seq))
+
+      `(defun ,(or alt-name
+                   (intern (princ-to-string function) wrapping-package))
+           (,@(mapcar #'required-param-name &required)
+            ,@(when &optional 
+                    `(&optional
+                      ,@(loop for optional in &optional
+                           collect
+                             (with-slots (name init-form supplied-p-parameter)
+                                 optional
+                               `(,name
+                                 ,init-form
+                                 ,supplied-p-parameter)))))
+            ,@(when &rest `(&rest ,@(mapcar #'rest-param-name &rest)))
+            ,@(when &key
+                    `(&key
+                      ,@(loop for key in &key
+                           collect
+                             (with-slots
+                                   (name keyword-name init-form supplied-p-parameter)
+                                 key
+                               `(,(if keyword-name
+                                      (list keyword-name name)
+                                      name)
+                                  ,init-form
+                                  ,supplied-p-parameter)))))
+            ,@(when &allow-other-keys
+                    `(&allow-other-keys)))
+         ,@(when &rest
+                 (list
+                  `(declare (ignore ,@(mapcar #'key-param-name &key)))))
+         ,(funcall
+           body-maker
+           function &required &optional &rest &key init-forms-okay-seq)))))
 
 (defun create-transparent-defun (function wrapper wrapping-package
-                                 &key force-rest alt-name)
+                                 &key
+                                   ((:force-rest *force-rest*) *force-rest*)
+                                   ((:allow-init-forms *allow-init-forms*)
+                                    *allow-init-forms*)
+                                   alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
-   :force-rest force-rest :alt-name alt-name
-   :body-maker (lambda (function required optional rest key)
-     (funcall wrapper (create-body function required optional rest key)))))
+   :alt-name alt-name
+   :body-maker
+   (lambda (function required optional rest key init-forms-okay-seq)
+     (funcall
+      wrapper
+      (create-body function required optional rest key init-forms-okay-seq)))))
 
 (defmacro transparent-defun (function wrapper wrapping-package
-                             &key force-rest alt-name)
+                             &key
+                               ((:force-rest *force-rest*) *force-rest*)
+                               ((:allow-init-forms *allow-init-forms*)
+                                *allow-init-forms*)
+                               alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
-   :force-rest force-rest :alt-name alt-name
-   :body-maker (lambda (function required optional rest key)
-     `(,wrapper ,(create-body function required optional rest key)))))
+   :alt-name alt-name
+   :body-maker
+   (lambda (function required optional rest key init-forms-okay-seq)
+     `(,wrapper
+       ,(create-body function required optional rest key init-forms-okay-seq)))))
 
 
 
