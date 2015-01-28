@@ -172,7 +172,10 @@
            ;; function signature and its init-forms are the last to be
            ;; evaluated, so we don't lose anything by letting the wrapped
            ;; function handle them completely
-           ;; ******************************************************************
+           (generic-function-congruence-issues
+            (and (subtypep (type-of (symbol-function function))
+                           'generic-function)
+                 (or &rest &key)))
            ;; init-forms are guaranteed to be evaluated in left-to-right order,
            ;; so we can safely hoist them into the wrapper only up to the first
            ;; parameter that contains a supply check - hoisting that parameter's
@@ -180,13 +183,9 @@
            ;; as t when it really should be nil, so we can't do that, and
            ;; init-forms further down the line may depend on that variable, so
            ;; we can't hoist any of their init-forms either
-           (init-forms-still-okay t)
+           (init-forms-still-okay (null generic-function-congruence-issues))
            (init-forms-okay-seq nil)
-           (init-forms-okay-after-optionals nil)
-           (generic-function-congruence-issues
-            (and (subtypep (type-of (symbol-function function))
-                           'generic-function)
-                 (or &rest &key))))
+           (init-forms-okay-after-optionals nil))
       (loop for optional in &optional
          do
            (with-slots (name init-form supplied-p-parameter) optional
@@ -217,7 +216,6 @@
               &key nil
               &allow-other-keys nil))
       (when (and (null &rest)
-
                  (or *force-rest*
                      ;; MUST pass possibly unknown args through
                      &allow-other-keys))

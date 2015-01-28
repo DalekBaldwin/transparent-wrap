@@ -35,6 +35,10 @@
    #:rest-key-aux
    
    #:alternating-optional-supplied
+   
+   #:generic-key
+   #:generic-rest
+   #:generic-rest-key
    ))
 
 (in-package :transparent-wrap-test.stateful)
@@ -337,3 +341,33 @@
                           arguments :length j)))
                  arguments :length i))
           combinations))
+
+(defgeneric generic-key (a &optional b &key c))
+
+(defmethod generic-key ((a integer) &optional (b (push :b-default-int *state*))
+                        &key (c (push :c-default-int *state*)))
+  (values a b c *state*))
+
+(defmethod generic-key ((a cons) &optional (b (push :b-default-cons *state*))
+                        &key (c (push :c-default-cons *state*)))
+  (values a b c *state*))
+
+(defgeneric generic-rest (a &optional b &rest rest))
+
+(defmethod generic-rest ((a integer) &optional (b (push :b-default-int *state*))
+                         &key (c (push :c-default-int *state*)))
+  (values a b c *state*))
+
+(defmethod generic-rest ((a cons) &optional (b (push :b-default-cons *state*))
+                         &key (c (push :c-default-cons *state*)))
+  (values a b c *state*))
+
+(defgeneric generic-rest-key (a &optional b &rest rest &key c))
+
+(defmethod generic-rest-key ((a integer) &optional (b (push :b-default-int *state*))
+                             &key (c (push :c-default-int *state*)))
+  (values a b c *state*))
+
+(defmethod generic-rest-key ((a cons) &optional (b (push :b-default-cons *state*))
+                             &key (c (push :c-default-cons *state*)))
+  (values a b c *state*))

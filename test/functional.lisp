@@ -35,6 +35,10 @@
    #:rest-key-aux
    
    #:alternating-optional-supplied
+   
+   #:generic-key
+   #:generic-rest
+   #:generic-rest-key
    ))
 
 (in-package :transparent-wrap-test.functional)
@@ -302,3 +306,33 @@
                           arguments :length j)))
                  arguments :length i))
           combinations))
+
+(defgeneric generic-key (a &optional b &key c))
+
+(defmethod generic-key ((a integer) &optional (b :b-default)
+                        &key (c :c-default))
+  (values a b c))
+
+(defmethod generic-key ((a cons) &optional (b :b-default-cons)
+                        &key (c :c-default-cons))
+  (values a b c))
+
+(defgeneric generic-rest (a &optional b &rest rest))
+
+(defmethod generic-rest ((a integer) &optional (b :b-default b-supplied)
+                         &key (c :c-default c-supplied))
+  (values a b c))
+
+(defmethod generic-rest ((a cons) &optional (b :b-default-cons b-supplied)
+                         &key (c :c-default-cons c-supplied))
+  (values a b c))
+
+(defgeneric generic-rest-key (a &optional b &rest rest &key c))
+
+(defmethod generic-rest-key ((a integer) &optional (b :b-default b-supplied)
+                             &key (c :c-default c-supplied))
+  (values a b c))
+
+(defmethod generic-rest-key ((a cons) &optional (b :b-default-cons b-supplied)
+                             &key (c :c-default-cons c-supplied))
+  (values a b c))
