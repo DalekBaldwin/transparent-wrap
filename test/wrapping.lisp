@@ -45,4 +45,4 @@
                 collect
                   (transparent-wrap:create-transparent-defun
                    symbol #'wrap :transparent-wrap-test.functional-wrap
-                   :allow-init-forms t))))
+                   :allow-reordered-init-forms t))))

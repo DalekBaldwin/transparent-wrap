@@ -1,6 +1,6 @@
 (in-package :transparent-wrap)
 
-(defparameter *allow-init-forms* nil)
+(defparameter *allow-reordered-init-forms* nil)
 (defparameter *force-rest* nil)
 
 (defun organize-arguments (arglist)
@@ -241,7 +241,7 @@
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
                ((or init-forms-still-okay
-                    (and init-forms-okay-after-optionals *allow-init-forms*))
+                    (and init-forms-okay-after-optionals *allow-reordered-init-forms*))
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
                 (push key init-forms-okay-seq))
@@ -285,12 +285,13 @@
            body-maker
            function &required &optional &rest &key init-forms-okay-seq)))))
 
-(defun create-transparent-defun (function wrapper wrapping-package
-                                 &key
-                                   ((:force-rest *force-rest*) *force-rest*)
-                                   ((:allow-init-forms *allow-init-forms*)
-                                    *allow-init-forms*)
-                                   alt-name)
+(defun create-transparent-defun
+    (function wrapper wrapping-package
+     &key
+       ((:force-rest *force-rest*) *force-rest*)
+       ((:allow-reordered-init-forms *allow-reordered-init-forms*)
+        *allow-reordered-init-forms*)
+       alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :alt-name alt-name
@@ -300,12 +301,13 @@
       wrapper
       (create-body function required optional rest key init-forms-okay-seq)))))
 
-(defmacro transparent-defun (function wrapper wrapping-package
-                             &key
-                               ((:force-rest *force-rest*) *force-rest*)
-                               ((:allow-init-forms *allow-init-forms*)
-                                *allow-init-forms*)
-                               alt-name)
+(defmacro transparent-defun
+    (function wrapper wrapping-package
+     &key
+       ((:force-rest *force-rest*) *force-rest*)
+       ((:allow-reordered-init-forms *allow-reordered-init-forms*)
+        *allow-reordered-init-forms*)
+       alt-name)
   (create-transparent-defun%
    function wrapper wrapping-package
    :alt-name alt-name
