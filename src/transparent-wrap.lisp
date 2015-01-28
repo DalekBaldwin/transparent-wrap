@@ -199,11 +199,6 @@
                (supplied-p-parameter
                 (setf init-form nil
                       init-forms-still-okay nil))
-               (generic-function-congruence-issues
-                (setf init-form nil)
-                (setf
-                 supplied-p-parameter
-                 (gensym (concatenate 'string (symbol-name name) "-SUPPLIED"))))
                (init-forms-still-okay
                 (setf supplied-p-parameter
                       (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))
@@ -285,7 +280,7 @@
                     `(&allow-other-keys)))
          ,@(when &rest
                  (list
-                  `(declare (ignore ,@(mapcar #'key-param-name &key)))))
+                  `(declare (ignorable ,@(mapcar #'key-param-name &key)))))
          ,(funcall
            body-maker
            function &required &optional &rest &key init-forms-okay-seq)))))
