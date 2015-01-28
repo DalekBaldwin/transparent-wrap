@@ -26,9 +26,8 @@
 (defstruct required-param
   name)
 
-(defstruct specialized-param
+(defstruct (specialized-param (:include required-param))
   whole
-  name
   specializer)
 
 (defstruct optional-param

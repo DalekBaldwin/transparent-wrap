@@ -73,7 +73,9 @@
              when (member key init-forms-okay-seq)
              collect key))
          (non-init-formable-keys
-          (set-difference &key init-formable-keys))
+          (loop for key in &key
+               unless (member key init-formable-keys)
+               collect key))
          (init-formable-optionals
           (loop for optional in &optional
              when (member optional init-forms-okay-seq)
@@ -203,7 +205,17 @@
                  supplied-p-parameter
                  (gensym (concatenate 'string (symbol-name name) "-SUPPLIED")))))))
       (setf init-forms-okay-after-optionals init-forms-still-okay)
+
+      ;; todo: generate decent signature based on analyzing lambda list
+      ;; congruence for generic functions? probably a lot of work...
+      (when (and (subtypep (type-of (symbol-function function))
+                           'generic-function)
+                 (or &rest &key))
+        (setf &rest (or &rest (list (make-rest-param :name (gensym "REST"))))
+              &key nil
+              &allow-other-keys nil))
       (when (and (null &rest)
+
                  (or *force-rest*
                      ;; MUST pass possibly unknown args through
                      &allow-other-keys))
