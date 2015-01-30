@@ -1,16 +1,13 @@
 (in-package :cl-user)
 
 (defpackage :transparent-wrap
-  (:use :cl)
+  (:use :cl :optima)
   (:export
-   :create-basic-defun
-   :create-transparent-defun
-   :create-basic-defmacro))
-
-(in-package :transparent-wrap)
-
-(defparameter *system-directory*
-  (make-pathname
-   :directory
-   (pathname-directory
-    (asdf:system-definition-pathname :transparent-wrap))))
+   #:create-opaque-defun
+   #:opaque-defun
+   #:create-transparent-defun
+   #:transparent-defun
+   #:create-opaque-defmacro
+   #:opaque-defmacro
+   #:create-transparent-defmacro
+   #:transparent-defmacro))
