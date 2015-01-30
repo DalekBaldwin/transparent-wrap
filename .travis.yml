@@ -24,7 +24,7 @@ install:
 script:
   cl -e '(in-package :cl-user)'
      -e '(let ((package 
-     -e "(progn #+sbcl (sb-ext:disable-debugger))"
+     -e "(progn \#+sbcl (sb-ext:disable-debugger))"
      -e '(ql:quickload (list :transparent-wrap :transparent-wrap-test))'
      -e '(let ((*debugger-hook*
                   (lambda (c h)
