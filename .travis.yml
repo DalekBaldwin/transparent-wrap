@@ -24,7 +24,7 @@ install:
 script:
   cl -e '(in-package :cl-user)'
      -e '(let ((dd (and (find-package :sb-ext)
-                        (find-symbol "DISABLE-DEBUGGER" :sb-ext))))
+                        (find-symbol \"DISABLE-DEBUGGER\" :sb-ext))))
            (when dd (funcall (symbol-function dd))))'
      -e '(ql:quickload (list :transparent-wrap :transparent-wrap-test))
      -e '(let ((*debugger-hook*
