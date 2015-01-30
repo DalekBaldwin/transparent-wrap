@@ -65,7 +65,7 @@
      (make-specialized-param
       :whole param
       :name name
-      :specializer specializer))))
+      :specialized specializer))))
 
 (defun match-optional (param)
   (match param
