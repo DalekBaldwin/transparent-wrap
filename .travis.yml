@@ -23,10 +23,12 @@ install:
 
 script:
   cl -e '(in-package :cl-user)'
+     -e '(ql:quickload (list :trivial-arguments :named-readtables :optima :fare-quasiquote-extras :stefil :alexandria))'
      -e '(let ((dd (and (find-package :sb-ext)
                         (find-symbol (symbol-name :disable-debugger) :sb-ext))))
            (when dd (funcall (symbol-function dd))))'
-     -e '(ql:quickload (list :transparent-wrap :transparent-wrap-test))'
+     -e '(asdf:load-system :transparent-wrap)'
+     -e '(asdf:load-system :transparent-wrap-test))'
      -e '(let ((*debugger-hook*
                   (lambda (c h)
                     (declare (ignore c h))
