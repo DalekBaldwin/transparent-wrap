@@ -23,7 +23,6 @@ install:
 
 script:
   cl -e '(in-package :cl-user)'
-     -e '(let ((package 
      -e '(let ((dd (and (find-package :sb-ext)
                         (find-symbol "DISABLE-DEBUGGER" :sb-ext))))
            (when dd (funcall (symbol-function dd))))'
