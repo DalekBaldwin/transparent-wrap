@@ -26,7 +26,8 @@ script:
      -e '(let ((dd (and (find-package :sb-ext)
                         (find-symbol "DISABLE-DEBUGGER" :sb-ext))))
            (when dd (funcall (symbol-function dd))))'
-     -e '(ql:quickload (list :transparent-wrap :transparent-wrap-test))'
+     -e '(asdf:load-system :transparent-wrap)'
+     -e '(asdf:test-system :transparent-wrap)'
      -e '(let ((*debugger-hook*
                   (lambda (c h)
                     (declare (ignore c h))
