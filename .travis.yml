@@ -24,7 +24,7 @@ install:
 script:
   cl -e '(in-package :cl-user)'
      -e '(ql:quickload :transparent-wrap :verbose t)'
-     -e '(ql:quickload :transparent-wrap-test)
+     -e '(ql:quickload :transparent-wrap-test)'
      -e '(let ((*debugger-hook*
                   (lambda (c h)
                     (declare (ignore c h))
