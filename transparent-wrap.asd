@@ -15,6 +15,7 @@
   :long-description
   #.(uiop:read-file-string
      (uiop:subpathname *load-pathname* "README.md"))
+  :homepage "https://github.com/DalekBaldwin/transparent-wrap"
   :components
   ((:static-file "transparent-wrap.asd")
    (:module :src
@@ -33,6 +34,9 @@
 (defsystem :transparent-wrap-test
   :name "transparent-wrap-test"
   :serial t
+  :author "Kyle Littler"
+  :license "LLGPL"
+  :description "Tests for transparent-wrap."
   :components
   ((:module :test
             :components ((:file "package")
