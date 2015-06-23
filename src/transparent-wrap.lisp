@@ -149,6 +149,34 @@
                       `(otherwise
                         ,all-optionals-present-cases)))))))))
 
+(macrolet ((destructuring-lambda (params &body body)
+             (alexandria:with-gensyms (shallow-params)
+               `(lambda (&rest ,shallow-params)
+                  (destructuring-bind (,params) ,shallow-params
+                    ,@body)))))
+  (defun parse-with-alexandria (arglist)
+    (multiple-value-bind (required optional rest keys allow-other-keys aux keyp)
+        (alexandria:parse-ordinary-lambda-list arglist)
+      (declare (ignore keyp))
+      (append
+       (mapcar (lambda (name) (make-required-param :name name)) required)
+       (mapcar (destructuring-lambda (&whole whole name init-form supplied-p-parameter)
+                 (make-optional-param :whole whole :name name :init-form init-form
+                                      :supplied-p-parameter supplied-p-parameter))
+               optional)
+       (when rest (list (make-rest-param :name rest)))
+       (mapcar (destructuring-lambda
+                   (&whole whole (keyword-name name)
+                           init-form &optional supplied-p-parameter)
+                 (make-key-param
+                  :whole whole :name name :keyword-name keyword-name
+                  :init-form init-form :supplied-p-parameter supplied-p-parameter))
+               keys)
+       (when allow-other-keys (list '&allow-other-keys))
+       (mapcar (destructuring-lambda (&whole whole name init-form)
+                 (make-aux-param :whole whole :name name :init-form init-form))
+               aux)))))
+
 (defun create-transparent-defun% (function wrapper wrapping-package
                                   &key alt-name body-maker)
   (let ((arglist (trivial-arguments:arglist (symbol-function function))))
@@ -159,7 +187,9 @@
         (create-opaque-defun function wrapper wrapping-package
                             :alt-name alt-name)))
 
-    (let* ((parsed (match-lambda-list arglist))
+    (let* ((parsed
+            ;;(match-lambda-list arglist)
+            (parse-with-alexandria arglist))
            (&required (remove-if-not #'required-param-p parsed))
            (&optional (remove-if-not #'optional-param-p parsed))
            (&rest (remove-if-not #'rest-param-p parsed))
