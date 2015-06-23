@@ -167,7 +167,7 @@
        (when rest (list (make-rest-param :name rest)))
        (mapcar (destructuring-lambda
                    (&whole whole (keyword-name name)
-                           init-form &optional supplied-p-parameter)
+                           init-form supplied-p-parameter)
                  (make-key-param
                   :whole whole :name name :keyword-name keyword-name
                   :init-form init-form :supplied-p-parameter supplied-p-parameter))
